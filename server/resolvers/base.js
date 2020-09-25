@@ -9,18 +9,18 @@ const {
   importParentCompanies,
   importTags,
   importProducts,
-  importBrands,
-  importBases,
+  importCompanies,
+  importCategories,
 } = require('../utils/bases');
 
 module.exports = {
   Mutation: {
-    importBases: async (parent, input, { isAdmin }) => {
+    importCategories: async (parent, input, { isAdmin }) => {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importBases');
-        await importBases();
+        console.log('importCategories');
+        await importCategories();
 
         return createGeneralResponse({
           ok: true,
@@ -105,12 +105,12 @@ module.exports = {
         });
       }
     },
-    importBrands: async (parent, input, { isAdmin }) => {
+    importCompanies: async (parent, input, { isAdmin }) => {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importBrands');
-        await importBrands();
+        console.log('importCompanies');
+        await importCompanies();
 
         return createGeneralResponse({
           ok: true,

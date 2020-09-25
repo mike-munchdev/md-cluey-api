@@ -24,7 +24,7 @@ const bases = [
 ];
 
 // #1
-module.exports.importBases = async () => {
+module.exports.importCategories = async () => {
   return new Promise(async (resolve, reject) => {
     try {
       await connectDatabase();
@@ -165,7 +165,7 @@ module.exports.importParentCompanies = async () => {
   });
 };
 // #2
-module.exports.importBrands = async () => {
+module.exports.importCompanies = async () => {
   return new Promise(async (resolve, reject) => {
     try {
       await connectDatabase();
@@ -212,8 +212,6 @@ module.exports.importBrands = async () => {
                     console.log('c', c);
                     return c.id === currentCategory._id;
                   });
-                  // console.log('existingCategory', existingCategory);
-                  // console.log('currentCategory', currentCategory);
 
                   if (!existingCategory) {
                     company.categories.push(currentCategory.id);
@@ -286,12 +284,28 @@ module.exports.importProductTypes = async () => {
         bases.filter((b) => b === 'Personal Care & Beauty'),
         async (b, index, array) => {
           try {
+            const category = await Category.findOne({ name: b });
+            console.log('category', category);
             console.log('Getting product types from base:', b);
             const records = await base(b).select({ view: 'Grid view' }).all();
-            records.forEach(async (record) => {
-              // create company
-              if (record.fields['Product Type']) {
-                productTypes.push(record.fields['Product Type']);
+            await asyncForEach(records, async (record, index, array) => {
+              let productType = await ProductType.findOne({
+                name: record.fields['Product Type'],
+              }).populate('categories');
+              if (!productType) {
+                productType = await ProductType.create({
+                  name: record.fields['Product Type'],
+                }).populate('categories');
+              }
+
+              // console.log('productType', productType);
+              // add category
+              const existingCategory = productType.categories.id(category._id);
+
+              console.log('existingCategory', existingCategory);
+              if (!existingCategory) {
+                productType.categories.push(category._id);
+                await productType.save();
               }
             });
           } catch (error) {
@@ -299,12 +313,8 @@ module.exports.importProductTypes = async () => {
           }
         }
       );
-      const uniqueProductTypes = [...new Set(productTypes)].map((u) => ({
-        name: u,
-      }));
-      await ProductType.insertMany(uniqueProductTypes);
-      console.log('Done.');
 
+      console.log('Done.');
       resolve();
     } catch (error) {
       Bugsnag.notify(error);
