@@ -3,6 +3,18 @@ const { default: validatorF } = require('validator');
 
 const Schema = mongoose.Schema;
 
+const companyResponseSchema = new Schema({
+  company: {
+    ref: 'Company',
+    type: Schema.Types.ObjectId,
+  },
+  response: {
+    type: String,
+    enum: ['will-buy', 'will-buy-later', 'will-not-buy', 'will-not-buy-later'],
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
 const UserSchema = new Schema({
   email: {
     type: String,
@@ -25,6 +37,7 @@ const UserSchema = new Schema({
   isActive: { type: Boolean, default: false },
   confirmToken: { type: String },
   pushTokens: [String],
+  responses: [companyResponseSchema],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -40,7 +53,15 @@ UserSchema.pre('save', async function () {
 
 UserSchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('UserSchema transform');
+
+  console.log('transform');
+  if (obj.responses) {
+    obj.responses = obj.responses.map((r) => {
+      r.id = r._id;
+      delete r._id;
+      return r;
+    });
+  }
   //Rename fields
   obj.id = obj._id;
   delete obj._id;

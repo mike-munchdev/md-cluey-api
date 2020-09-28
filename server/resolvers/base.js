@@ -15,11 +15,34 @@ const {
 
 module.exports = {
   Mutation: {
+    importAll: async (parent, input, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
+
+        await importCategories();
+        await importProductTypes();
+        await importCompanies();
+        await importParentCompanies();
+        await importTags();
+        await importProducts();
+
+        return createGeneralResponse({
+          ok: true,
+          message: 'Completed',
+        });
+      } catch (error) {
+        return createGeneralResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
     importCategories: async (parent, input, { isAdmin }) => {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importCategories');
+
         await importCategories();
 
         return createGeneralResponse({
@@ -37,7 +60,7 @@ module.exports = {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importProducts');
+
         await importProducts();
 
         return createGeneralResponse({
@@ -55,7 +78,7 @@ module.exports = {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importProductTypes');
+
         await importProductTypes();
 
         return createGeneralResponse({
@@ -73,7 +96,7 @@ module.exports = {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importTags');
+
         await importTags();
 
         return createGeneralResponse({
@@ -91,7 +114,7 @@ module.exports = {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importParentCompanies');
+
         await importParentCompanies();
 
         return createGeneralResponse({
@@ -109,7 +132,7 @@ module.exports = {
       try {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
-        console.log('importCompanies');
+
         await importCompanies();
 
         return createGeneralResponse({

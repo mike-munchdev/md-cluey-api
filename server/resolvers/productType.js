@@ -4,24 +4,28 @@ const { ERRORS } = require('../constants/errors');
 const { convertError } = require('../utils/errors');
 const { generateToken } = require('../utils/authentication');
 const connectDatabase = require('../models/connectDatabase');
-const { createCategoriesResponse } = require('../utils/responses');
+const { createProductTypesResponse } = require('../utils/responses');
 
 const Category = require('../models/Category');
 
 module.exports = {
   Query: {
-    getCategories: async (parent, input, context) => {
+    getProductTypesByCategory: async (parent, { id }, context) => {
       try {
         await connectDatabase();
 
-        const categories = await Category.find({});
+        const categories = await Category.findById(id, 'productTypes').populate(
+          'productTypes'
+        );
 
-        return createCategoriesResponse({
+        return createProductTypesResponse({
           ok: true,
-          categories: categories ? categories.map((c) => c.transform()) : [],
+          productTypes: categories.productTypes
+            ? categories.productTypes.map((p) => p.transform())
+            : [],
         });
       } catch (error) {
-        return createCategoriesResponse({
+        return createProductTypesResponse({
           ok: false,
           error: convertError(error),
         });

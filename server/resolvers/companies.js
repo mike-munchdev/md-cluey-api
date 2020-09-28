@@ -4,7 +4,10 @@ const { ERRORS } = require('../constants/errors');
 const { convertError } = require('../utils/errors');
 const { generateToken } = require('../utils/authentication');
 const connectDatabase = require('../models/connectDatabase');
-const { createCompaniesResponse } = require('../utils/responses');
+const {
+  createCompaniesResponse,
+  createCompanyResponse,
+} = require('../utils/responses');
 
 const Company = require('../models/Company');
 
@@ -13,7 +16,6 @@ module.exports = {
     getCompaniesByName: async (parent, { name, exact }, context) => {
       try {
         await connectDatabase();
-        console.log('getCompaniesByName', name, exact);
 
         let companies;
 
@@ -22,15 +24,13 @@ module.exports = {
             // .populate('parentCompanies')
             .populate('tags');
         } else {
-          //   const $regex = escapeStringRegexp(`/${name}/`);
-          //   console.log('$regex', $regex);
           companies = await Company.find({
             name: { $regex: name, $options: 'i' },
           })
             // .populate('parentCompanies')
             .populate('tags');
         }
-        console.log('companies', companies);
+
         return createCompaniesResponse({
           ok: true,
           companies: companies ? companies.map((c) => c.transform()) : [],
@@ -46,19 +46,51 @@ module.exports = {
     getCompaniesByCategory: async (parent, { id }, context) => {
       try {
         await connectDatabase();
-        console.log('getCompaniesByCategory');
 
         const companies = await Company.find({ categories: id });
         // .populate('parentCompanies')
         // .populate('tags');
 
-        console.log('companies', companies);
         return createCompaniesResponse({
           ok: true,
           companies: companies ? companies.map((c) => c.transform()) : [],
         });
       } catch (error) {
         return createCompaniesResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    getCompaniesByProductType: async (parent, { id }, context) => {
+      try {
+        await connectDatabase();
+
+        const companies = await Company.find({ productTypes: id });
+
+        return createCompaniesResponse({
+          ok: true,
+          companies: companies ? companies.map((c) => c.transform()) : [],
+        });
+      } catch (error) {
+        return createCompaniesResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    getCompanyById: async (parent, { id }, context) => {
+      try {
+        await connectDatabase();
+
+        const company = await Company.findById(id);
+
+        return createCompanyResponse({
+          ok: true,
+          company: company.transform(),
+        });
+      } catch (error) {
+        return createCompanyResponse({
           ok: false,
           error: convertError(error),
         });

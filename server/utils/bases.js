@@ -8,6 +8,8 @@ const Company = require('../models/Company');
 const Tag = require('../models/Tag');
 const { getDomainNameBrandUrl } = require('./url');
 const Category = require('../models/Category');
+const User = require('../models/User');
+const user = require('../resolvers/user');
 
 const base = require('airtable').base('appQMsMsx6eE2CMWF');
 
@@ -49,6 +51,7 @@ module.exports.importCategories = async () => {
     }
   });
 };
+
 // #6
 module.exports.importProducts = async () => {
   return new Promise(async (resolve, reject) => {
@@ -114,7 +117,7 @@ module.exports.importProducts = async () => {
   });
 };
 
-// #3
+// #4
 module.exports.importParentCompanies = async () => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -164,7 +167,8 @@ module.exports.importParentCompanies = async () => {
     }
   });
 };
-// #2
+
+// #3
 module.exports.importCompanies = async () => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -181,20 +185,21 @@ module.exports.importCompanies = async () => {
             await asyncForEach(records, async (record, index, array) => {
               // create brand
               if (record.fields['Search by name (primary query)']) {
-                const existingCompany = await Company.findOne({
+                let existingCompany = await Company.findOne({
                   name: record.fields['Search by name (primary query)'],
                 });
+
                 if (!existingCompany) {
                   console.log(
                     `adding new company ${record.fields['Search by name (primary query)']}`
                   );
-                  const company = new Company({
+                  existingCompany = new Company({
                     name: record.fields['Search by name (primary query)'],
                   });
 
                   // add brand url
                   if (record.fields['Brand URL']) {
-                    company.brandUrl = record.fields['Brand URL'];
+                    existingCompany.brandUrl = record.fields['Brand URL'];
                   }
 
                   // add parent companies
@@ -205,19 +210,37 @@ module.exports.importCompanies = async () => {
                     const parentCompanies = await Company.find({
                       name: { $in: record.fields['Parent Company(ies)'] },
                     });
-                    company.parentCompanies = parentCompanies;
+                    existingCompany.parentCompanies = parentCompanies;
                   }
                   // add category
-                  const existingCategory = company.categories.find((c) => {
-                    console.log('c', c);
-                    return c.id === currentCategory._id;
-                  });
+                  const existingCategory = existingCompany.categories.find(
+                    (c) => {
+                      console.log('c', c);
+                      return c.id === currentCategory._id;
+                    }
+                  );
 
                   if (!existingCategory) {
-                    company.categories.push(currentCategory.id);
+                    existingCompany.categories.push(currentCategory.id);
                   }
 
-                  await company.save();
+                  await existingCompany.save();
+                }
+
+                if (record.fields['Product Type']) {
+                  const currentProductType = await ProductType.findOne({
+                    name: record.fields['Product Type'],
+                  });
+
+                  const existingProductType = await Company.findOne({
+                    _id: existingCompany.id,
+                    productTypes: currentProductType._id,
+                  });
+
+                  if (!existingProductType) {
+                    existingCompany.productTypes.push(currentProductType._id);
+                    await existingCompany.save();
+                  }
                 }
               }
             });
@@ -238,6 +261,7 @@ module.exports.importCompanies = async () => {
     }
   });
 };
+
 // #5
 module.exports.importTags = async () => {
   return new Promise(async (resolve, reject) => {
@@ -273,7 +297,8 @@ module.exports.importTags = async () => {
     }
   });
 };
-// #4
+
+// #2
 module.exports.importProductTypes = async () => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -285,27 +310,29 @@ module.exports.importProductTypes = async () => {
         async (b, index, array) => {
           try {
             const category = await Category.findOne({ name: b });
-            console.log('category', category);
             console.log('Getting product types from base:', b);
             const records = await base(b).select({ view: 'Grid view' }).all();
             await asyncForEach(records, async (record, index, array) => {
-              let productType = await ProductType.findOne({
-                name: record.fields['Product Type'],
-              }).populate('categories');
-              if (!productType) {
-                productType = await ProductType.create({
+              if (record.fields['Product Type']) {
+                let productType = await ProductType.findOne({
                   name: record.fields['Product Type'],
-                }).populate('categories');
-              }
+                });
 
-              // console.log('productType', productType);
-              // add category
-              const existingCategory = productType.categories.id(category._id);
+                if (!productType) {
+                  productType = await ProductType.create({
+                    name: record.fields['Product Type'],
+                  });
+                }
 
-              console.log('existingCategory', existingCategory);
-              if (!existingCategory) {
-                productType.categories.push(category._id);
-                await productType.save();
+                const existingProductType = await User.findOne({
+                  _id: user._id,
+                  productTypes: productType._id,
+                });
+
+                if (!existingProductType) {
+                  category.productTypes.push(productType._id);
+                  await category.save();
+                }
               }
             });
           } catch (error) {

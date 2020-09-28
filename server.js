@@ -50,7 +50,6 @@ const resolvers = require('./server/resolvers/index');
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
   app.use(express.static(path.join(__dirname, 'public')));
-  console.log('dir', path.join(__dirname, 'public'));
 
   const playground = process.env.GRAPHQL_PLAYGROUND_ENABLED === 'true';
   const introspection = process.env.GRAPHQL_INTROSPECTION_ENABLED === 'true';
