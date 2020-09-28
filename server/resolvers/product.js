@@ -16,7 +16,7 @@ module.exports = {
     getProductsByName: async (parent, { name, exact }, context) => {
       try {
         await connectDatabase();
-        console.log('getProductsByName', name, exact);
+
         // if (!exact && name.length < 3)
         //   throw new Error(ERRORS.PRODUCT.SEARCH_TEXT_LENGTH_TOO_SHORT);
         let products;
@@ -29,7 +29,7 @@ module.exports = {
             .populate('tags');
         } else {
           //   const $regex = escapeStringRegexp(`/${name}/`);
-          //   console.log('$regex', $regex);
+
           products = await Product.find({
             name: { $regex: name, $options: 'i' },
           })
@@ -38,7 +38,7 @@ module.exports = {
             .populate('parentCompanies')
             .populate('tags');
         }
-        console.log('products', products);
+
         return createProductsResponse({
           ok: true,
           products: products ? products.map((p) => p.transform()) : [],

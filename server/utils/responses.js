@@ -1,5 +1,7 @@
+const { default: Bugsnag } = require('@bugsnag/js');
+
 module.exports.createUserResponse = ({ ok, user = null, error = null }) => {
-  if (error) console.log('error', error);
+  if (error) Bugsnag.notify(error);
   return {
     ok,
     user,
@@ -12,7 +14,7 @@ module.exports.createGeneralResponse = ({
   message = null,
   error = null,
 }) => {
-  if (error) console.log('error', error);
+  if (error) Bugsnag.notify(error);
   return {
     ok,
     message,
@@ -27,7 +29,7 @@ module.exports.createAuthenticationResponse = ({
   user = null,
   error = null,
 }) => {
-  if (error) console.log('error', error);
+  if (error) Bugsnag.notify(error);
   return {
     ok,
     token,
@@ -43,7 +45,7 @@ module.exports.createProductsResponse = ({
   error = null,
   searchText = null,
 }) => {
-  if (error) console.log('error', error);
+  if (error) Bugsnag.notify(error);
   return {
     ok,
     products,
@@ -56,10 +58,22 @@ module.exports.createCompaniesResponse = ({
   error = null,
   searchText = null,
 }) => {
-  if (error) console.log('error', error);
+  if (error) Bugsnag.notify(error);
   return {
     ok,
     companies,
+    error,
+  };
+};
+module.exports.createCompanyResponse = ({
+  ok,
+  company = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    company,
     error,
   };
 };
@@ -69,10 +83,38 @@ module.exports.createCategoriesResponse = ({
   categories = null,
   error = null,
 }) => {
-  if (error) console.log('error', error);
+  if (error) Bugsnag.notify(error);
   return {
     ok,
     categories,
+    error,
+  };
+};
+
+module.exports.createProductTypesResponse = ({
+  ok,
+  productTypes = null,
+  error = null,
+  searchText = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    productTypes,
+    error,
+  };
+};
+
+module.exports.createCompanyResponseResponse = ({
+  ok,
+  response = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  console.log('response', response);
+  return {
+    ok,
+    response,
     error,
   };
 };

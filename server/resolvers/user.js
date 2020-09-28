@@ -10,9 +10,11 @@ const connectDatabase = require('../models/connectDatabase');
 const {
   createUserResponse,
   createGeneralResponse,
+  createCompanyResponseResponse,
 } = require('../utils/responses');
 const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
+const Company = require('../models/Company');
 
 module.exports = {
   Query: {
@@ -42,9 +44,8 @@ module.exports = {
       try {
         await connectDatabase();
         // TODO: check for accounts in db for this user/code
-        console.log('updateUserPassword');
+
         let user = await User.findById(input.userId);
-        console.log('user', user);
 
         if (!user)
           throw new Error('No user found with the provided information.');
@@ -179,7 +180,7 @@ module.exports = {
     addPushToken: async (parent, { input }, { isAdmin, user }) => {
       try {
         await connectDatabase();
-        console.log('addPushToken', input);
+
         const { userId, pushToken } = input;
         if (!userId) throw new Error(ERRORS.USER.NOT_FOUND);
         const user = await User.findById(userId);
@@ -203,7 +204,6 @@ module.exports = {
           user: updatedUser,
         });
       } catch (error) {
-        console.log('error', error);
         return createUserResponse({
           ok: false,
           error,
@@ -212,7 +212,6 @@ module.exports = {
     },
     activateUserAccount: async (parent, { confirmToken }, { isAdmin }) => {
       try {
-        console.log('activateUserAccount');
         await connectDatabase();
 
         // TODO: check for confirm token
@@ -230,6 +229,53 @@ module.exports = {
         });
       } catch (error) {
         return createGeneralResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    updateCompanyResponseForUser: async (parent, { input }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        const { userId, companyId, response } = input;
+        console.log('input', input);
+        // TODO: check for accounts in db for this user/code
+
+        let user = await User.findById(userId).populate({
+          path: 'responses',
+          populate: {
+            path: 'company',
+          },
+        });
+
+        if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
+        let company = await Company.findById(companyId);
+
+        if (!company)
+          throw new Error(ERRORS.COMPANY.NOT_FOUND_WITH_PROVIDED_INFO);
+
+        const existingResponseIndex = user.responses.findIndex((r) => {
+          return r.company._id.toString() === company._id.toString();
+        });
+
+        let returnIndex = existingResponseIndex;
+        if (existingResponseIndex >= 0) {
+          user.responses[existingResponseIndex].response = response;
+          user.responses[existingResponseIndex].updatedAt = Date.now();
+        } else {
+          user.responses.push({ company: company._id, response });
+          returnIndex = user.responses.length - 1;
+        }
+
+        await user.save();
+        console.log('user.responses[returnIndex]', user.responses[returnIndex]);
+        return createCompanyResponseResponse({
+          ok: true,
+          response: user.responses[returnIndex],
+        });
+      } catch (error) {
+        console.log('error', error);
+        return createCompanyResponseResponse({
           ok: false,
           error: convertError(error),
         });

@@ -2,20 +2,19 @@ const { gql } = require('apollo-server-express');
 
 // Construct a schema, using GraphQL schema language
 const typeDefs = gql`
-  type Category {
+  type ProductType {
     id: ID!
     name: String!
-    slug: String
-    logoUrl: String
   }
 
-  type CategoriesResponse {
+  type ProductTypesResponse {
     ok: Boolean!
-    categories: [Category!]
+    productTypes: [ProductType!]
     error: Error
+    searchText: String
   }
   type Query {
-    getCategories: CategoriesResponse
+    getProductTypesByCategory(id: String!): ProductTypesResponse
   }
 `;
 

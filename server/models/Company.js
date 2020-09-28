@@ -7,12 +7,12 @@ const CompanySchema = new Schema({
   name: { type: String, required: true },
   brandUrl: { type: String },
   brandLogoUrl: { type: String },
-  // parentCompanies: [
-  //   {
-  //     type: Schema.Types.ObjectId,
-  //     ref: 'Company',
-  //   },
-  // ],
+  productTypes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'ProductType',
+    },
+  ],
   categories: [
     {
       type: Schema.Types.ObjectId,
@@ -25,7 +25,7 @@ const CompanySchema = new Schema({
 
 CompanySchema.method('transform', function () {
   let obj = this.toObject();
-  // console.log('CompanySchema transform');
+
   //Rename fields
   obj.id = obj._id;
 

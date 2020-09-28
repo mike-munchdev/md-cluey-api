@@ -11,14 +11,27 @@ const typeDefs = gql`
     googleId: String
     facebookId: String
     pushTokens: [String!]
+    responses: [CompanyResponse!]
     isActive: Boolean
     confirmToken: String
     createdAt: Date!
   }
 
+  type CompanyResponse {
+    id: ID!
+    company: Company!
+    response: String!
+  }
+
   type UserResponse {
     ok: Boolean!
     user: User
+    error: Error
+  }
+
+  type CompanyResponseResponse {
+    ok: Boolean!
+    response: CompanyResponse!
     error: Error
   }
 
@@ -63,6 +76,11 @@ const typeDefs = gql`
     pushToken: String!
   }
 
+  input UserCompanyResponseInput {
+    userId: String!
+    companyId: String!
+    response: String!
+  }
   type Query {
     getUserById(userId: String!): UserResponse!
   }
@@ -74,6 +92,9 @@ const typeDefs = gql`
     userSignup(input: UserSignupInput!): GeneralResponse!
     addPushToken(input: AddPushToken!): UserResponse!
     activateUserAccount(confirmToken: String!): GeneralResponse!
+    updateCompanyResponseForUser(
+      input: UserCompanyResponseInput!
+    ): CompanyResponseResponse!
   }
 `;
 

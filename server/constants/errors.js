@@ -22,4 +22,8 @@ module.exports.ERRORS = {
     SEARCH_TEXT_LENGTH_TOO_SHORT:
       'The search text must be at least 3 characters long',
   },
+  COMPANY: {
+    NOT_FOUND_WITH_PROVIDED_INFO:
+      'No company found with the provided information.',
+  },
 };

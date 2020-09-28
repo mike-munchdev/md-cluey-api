@@ -23,21 +23,13 @@ module.exports = {
     ) => {
       try {
         await connectDatabase();
-        console.log(
-          'getUserToken',
-          email,
-          password,
-          facebookId,
-          facebookAuthToken,
-          googleAuthToken,
-          googleId
-        );
+
         let user;
         if (facebookId && facebookAuthToken) {
           const response = await axios.get(
             `https://graph.facebook.com/me?access_token=${facebookAuthToken}&fields=id,first_name,last_name,email`
           );
-          console.log('response.data', response.data);
+
           const { id, email } = response.data;
 
           user = await User.findOne({
@@ -63,7 +55,6 @@ module.exports = {
             throw new Error(ERRORS.USER.EMAIL_AND_PASSWORD_INCORRECT);
         }
 
-        // console.log('generateToken: user', user);
         const token = await generateToken({
           user: {
             id: user.id,
