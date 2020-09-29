@@ -1,4 +1,5 @@
 const { withFilter } = require('apollo-server-express');
+const { ObjectId } = require('mongoose').Types;
 const randomstring = require('randomstring');
 const { ERRORS } = require('../constants/errors');
 const { convertError } = require('../utils/errors');
@@ -44,7 +45,7 @@ module.exports = {
       try {
         await connectDatabase();
         // TODO: check for accounts in db for this user/code
-
+        console.log('updateUserPassword', input);
         let user = await User.findById(input.userId);
 
         if (!user)
@@ -86,18 +87,24 @@ module.exports = {
     updateUser: async (parent, { input }, { isAdmin }) => {
       try {
         const { userId } = input;
+
+        console.log('updateUser', input);
         if (!userId) throw new Error(ERRORS.USER.NOT_FOUND);
         await connectDatabase();
 
-        await User.findOneAndUpdate({ _id: userId }, input, {
-          upsert: false,
-        });
+        await User.findOneAndUpdate(
+          { _id: new ObjectId(userId) },
+          omit(input, ['userId']),
+          {
+            upsert: false,
+          }
+        );
 
         const user = await User.findById(userId);
 
         return createUserResponse({
           ok: true,
-          user,
+          user: user.transform(),
         });
       } catch (error) {
         return createUserResponse({

@@ -8,18 +8,23 @@ const typeDefs = gql`
     firstName: String!
     middleName: String
     lastName: String!
+    dob: Date
+    city: String
+    state: String
+    gender: String
     googleId: String
     facebookId: String
     pushTokens: [String!]
     responses: [CompanyResponse!]
-    isActive: Boolean
     confirmToken: String
+    isProfilePublic: Boolean
+    isActive: Boolean
     createdAt: Date!
   }
 
   type CompanyResponse {
     id: ID!
-    company: Company!
+    companyId: ID!
     response: String!
   }
 
@@ -53,6 +58,12 @@ const typeDefs = gql`
     lastName: String
     googleId: String
     facebookId: String
+    isProfilePublic: Boolean
+    isActive: Boolean
+    dob: Date
+    city: String
+    state: String
+    gender: String
   }
 
   input UpdateUserPasswordInput {
