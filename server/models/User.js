@@ -28,6 +28,13 @@ const UserSchema = new Schema({
   firstName: { type: String, required: false },
   middleName: { type: String, required: false },
   lastName: { type: String, required: false },
+  dob: { type: Date },
+  city: { type: String },
+  state: { type: String },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+  },
   googleId: { type: String },
   googleAuthToken: { type: String },
   // googleAuthTokenExpiry: { type: Date },
@@ -38,6 +45,7 @@ const UserSchema = new Schema({
   confirmToken: { type: String },
   pushTokens: [String],
   responses: [companyResponseSchema],
+  isProfilePublic: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -54,11 +62,12 @@ UserSchema.pre('save', async function () {
 UserSchema.method('transform', function () {
   let obj = this.toObject();
 
-  console.log('transform');
   if (obj.responses) {
     obj.responses = obj.responses.map((r) => {
       r.id = r._id;
+      r.companyId = r.company;
       delete r._id;
+      delete r.company;
       return r;
     });
   }
@@ -66,6 +75,7 @@ UserSchema.method('transform', function () {
   obj.id = obj._id;
   delete obj._id;
   delete obj.password;
+
   return obj;
 });
 
