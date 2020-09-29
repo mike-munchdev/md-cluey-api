@@ -30,14 +30,13 @@ module.exports = {
             `https://graph.facebook.com/me?access_token=${facebookAuthToken}&fields=id,first_name,last_name,email`
           );
 
-          console.log('response', response.data);
           const { id, email } = response.data;
 
           user = await User.findOne({
             facebookId: id,
             email,
           });
-          console.log('user', user);
+
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else if (googleAuthToken && googleId) {
@@ -57,7 +56,6 @@ module.exports = {
             throw new Error(ERRORS.USER.EMAIL_AND_PASSWORD_INCORRECT);
         }
 
-        console.log('about to generate token');
         const token = await generateToken({
           user: {
             id: user.id,

@@ -45,7 +45,7 @@ module.exports = {
       try {
         await connectDatabase();
         // TODO: check for accounts in db for this user/code
-        console.log('updateUserPassword', input);
+
         let user = await User.findById(input.userId);
 
         if (!user)
@@ -88,7 +88,6 @@ module.exports = {
       try {
         const { userId } = input;
 
-        console.log('updateUser', input);
         if (!userId) throw new Error(ERRORS.USER.NOT_FOUND);
         await connectDatabase();
 
@@ -245,7 +244,7 @@ module.exports = {
       try {
         await connectDatabase();
         const { userId, companyId, response } = input;
-        console.log('input', input);
+
         // TODO: check for accounts in db for this user/code
 
         let user = await User.findById(userId).populate({
@@ -275,7 +274,7 @@ module.exports = {
         }
 
         await user.save();
-        console.log('user.responses[returnIndex]', user.responses[returnIndex]);
+
         return createCompanyResponseResponse({
           ok: true,
           response: user.responses[returnIndex],

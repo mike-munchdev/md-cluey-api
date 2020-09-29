@@ -111,7 +111,7 @@ module.exports.createCompanyResponseResponse = ({
   error = null,
 }) => {
   if (error) Bugsnag.notify(error);
-  console.log('response', response);
+
   return {
     ok,
     response,
