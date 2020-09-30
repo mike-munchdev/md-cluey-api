@@ -17,7 +17,7 @@ const typeDefs = gql`
   }
   type CompanyResponse {
     ok: Boolean!
-    company: Company
+    company: Company!
     error: Error
   }
 

@@ -61,16 +61,36 @@ UserSchema.pre('save', async function () {
 
 UserSchema.method('transform', function () {
   let obj = this.toObject();
-
+  console.log('UserSchema: transform');
   if (obj.responses) {
     obj.responses = obj.responses.map((r) => {
       r.id = r._id;
       r.companyId = r.company;
       delete r._id;
-      delete r.company;
+      // delete r.company;
       return r;
     });
   }
+  //Rename fields
+  obj.id = obj._id;
+  delete obj._id;
+  delete obj.password;
+
+  return obj;
+});
+
+companyResponseSchema.method('transform', function () {
+  let obj = this.toObject();
+  console.log('companyResponseSchema: transform');
+  // if (obj.responses) {
+  //   obj.responses = obj.responses.map((r) => {
+  //     r.id = r._id;
+  //     r.companyId = r.company;
+  //     delete r._id;
+  //     // delete r.company;
+  //     return r;
+  //   });
+  // }
   //Rename fields
   obj.id = obj._id;
   delete obj._id;

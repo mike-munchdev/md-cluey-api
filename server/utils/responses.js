@@ -107,14 +107,26 @@ module.exports.createProductTypesResponse = ({
 
 module.exports.createCompanyResponseResponse = ({
   ok,
-  response = null,
+  companyResponse = null,
   error = null,
 }) => {
   if (error) Bugsnag.notify(error);
 
   return {
     ok,
-    response,
+    companyResponse,
+    error,
+  };
+};
+module.exports.createCompanyResponsesResponse = ({
+  ok,
+  companyResponses = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    companyResponses,
     error,
   };
 };

@@ -12,6 +12,7 @@ const {
   createUserResponse,
   createGeneralResponse,
   createCompanyResponseResponse,
+  createCompanyResponsesResponse,
 } = require('../utils/responses');
 const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
@@ -34,6 +35,33 @@ module.exports = {
         });
       } catch (error) {
         return createUserResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    getUserCompanyResponses: async (parent, { userId }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+
+        console.log('getUserCompanyResponses', userId);
+        // TODO: check for accounts in db for this user/code
+        const user = await User.findById(userId).populate({
+          path: 'responses',
+          populate: {
+            path: 'company',
+          },
+        });
+
+        console.log('user', user.responses);
+        if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
+
+        return createCompanyResponsesResponse({
+          ok: true,
+          companyResponses: user.responses,
+        });
+      } catch (error) {
+        return createCompanyResponsesResponse({
           ok: false,
           error: convertError(error),
         });
@@ -245,7 +273,7 @@ module.exports = {
         await connectDatabase();
         const { userId, companyId, response } = input;
 
-        // TODO: check for accounts in db for this user/code
+        console.log('updateCompanyResponseForUser');
 
         let user = await User.findById(userId).populate({
           path: 'responses',
@@ -273,11 +301,12 @@ module.exports = {
           returnIndex = user.responses.length - 1;
         }
 
+        console.log('user.responses', user.responses);
         await user.save();
-
+        console.log('user.responses', user.responses);
         return createCompanyResponseResponse({
           ok: true,
-          response: user.responses[returnIndex],
+          companyResponse: user.responses[returnIndex].transform(),
         });
       } catch (error) {
         console.log('error', error);

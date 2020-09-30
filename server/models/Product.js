@@ -25,7 +25,7 @@ const ProductSchema = new Schema({
 
 ProductSchema.method('transform', function () {
   let obj = this.toObject();
-
+  console.log('ProductSchema: transform');
   //Rename fields
   obj.id = obj._id;
 

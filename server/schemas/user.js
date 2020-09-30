@@ -15,16 +15,17 @@ const typeDefs = gql`
     googleId: String
     facebookId: String
     pushTokens: [String!]
-    responses: [CompanyResponse!]
+    customerResponses: [ResponseToCompany!]
     confirmToken: String
     isProfilePublic: Boolean
     isActive: Boolean
     createdAt: Date!
   }
 
-  type CompanyResponse {
+  type ResponseToCompany {
     id: ID!
-    companyId: ID!
+
+    company: Company!
     response: String!
   }
 
@@ -36,7 +37,13 @@ const typeDefs = gql`
 
   type CompanyResponseResponse {
     ok: Boolean!
-    response: CompanyResponse!
+    companyResponse: ResponseToCompany!
+    error: Error
+  }
+
+  type CompanyResponsesResponse {
+    ok: Boolean!
+    companyResponses: [ResponseToCompany!]
     error: Error
   }
 
@@ -92,8 +99,10 @@ const typeDefs = gql`
     companyId: String!
     response: String!
   }
+
   type Query {
     getUserById(userId: String!): UserResponse!
+    getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
   }
 
   type Mutation {
