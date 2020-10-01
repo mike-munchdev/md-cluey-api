@@ -10,6 +10,7 @@ const typeDefs = gql`
     importParentCompanies: GeneralResponse
     importTags: GeneralResponse
     importCompanies: GeneralResponse
+    importLogos: GeneralResponse
   }
 `;
 

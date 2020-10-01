@@ -1,6 +1,8 @@
+const { default: Bugsnag } = require('@bugsnag/js');
+const axios = require('axios').default;
+const fs = require('fs');
 const asyncForEach = require('./asyncForEach');
 const connectDatabase = require('../models/connectDatabase');
-const { default: Bugsnag } = require('@bugsnag/js');
 const Products = require('../models/Product');
 const ProductType = require('../models/ProductType');
 const Product = require('../models/Product');
@@ -10,6 +12,7 @@ const { getDomainNameBrandUrl } = require('./url');
 const Category = require('../models/Category');
 const User = require('../models/User');
 const user = require('../resolvers/user');
+const path = require('path');
 
 const base = require('airtable').base('appQMsMsx6eE2CMWF');
 
@@ -345,6 +348,59 @@ module.exports.importProductTypes = async () => {
       resolve();
     } catch (error) {
       Bugsnag.notify(error);
+      reject(error);
+    }
+  });
+};
+
+module.exports.importLogos = async () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const companies = await Company.find({
+        brandUrl: { $ne: null },
+        brandLogoUrl: { $eq: null },
+      });
+      await asyncForEach(companies, async (company, index, array) => {
+        try {
+          const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+          console.log(
+            `starting image lookup for ${company.name} with for ${brandNameUrl}`
+          );
+          const riteKitResponse = await axios.get(
+            `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=bfa908bdd61498f0359b33d67de29ec128ba65c7bb09`
+          );
+
+          // console.log('riteKitResponse', riteKitResponse.data);
+          if (riteKitResponse.data.url) {
+            const imageResponse = await axios.get(riteKitResponse.data.url, {
+              responseType: 'stream',
+            });
+            imageResponse.data.pipe(
+              fs.createWriteStream(
+                path.join(
+                  __dirname,
+                  '../../',
+                  'public/logos',
+                  `${brandNameUrl}.png`
+                )
+              )
+            );
+          }
+          console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+          await Company.findOneAndUpdate(
+            { _id: company._id },
+            { brandLogoUrl: `${brandNameUrl}.png` }
+          );
+
+          console.log(`done with ${company.name}`);
+        } catch (error) {
+          console.log('error', error);
+        }
+      });
+      console.log(`Done.`);
+      resolve();
+    } catch (error) {
+      console.log('error', error);
       reject(error);
     }
   });

@@ -25,7 +25,7 @@ const CompanySchema = new Schema({
 
 CompanySchema.method('transform', function () {
   let obj = this.toObject();
-
+  console.log('CompanySchema: transform');
   //Rename fields
   obj.id = obj._id;
 

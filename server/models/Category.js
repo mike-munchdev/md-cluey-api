@@ -17,7 +17,7 @@ const CategorySchema = new Schema({
 });
 CategorySchema.method('transform', function () {
   let obj = this.toObject();
-
+  // console.log('CategorySchema: transform');
   //Rename fields
   obj.id = obj._id;
 
