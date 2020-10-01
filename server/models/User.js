@@ -67,6 +67,8 @@ UserSchema.method('transform', function () {
       r.id = r._id;
       r.companyId = r.company;
       delete r._id;
+      r.company.id = r.company._id;
+      console.log('r.company', r.company);
       // delete r.company;
       return r;
     });
@@ -82,6 +84,7 @@ UserSchema.method('transform', function () {
 companyResponseSchema.method('transform', function () {
   let obj = this.toObject();
   console.log('companyResponseSchema: transform');
+  obj.company.id = obj.company._id;
   // if (obj.responses) {
   //   obj.responses = obj.responses.map((r) => {
   //     r.id = r._id;
