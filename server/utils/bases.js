@@ -14,7 +14,7 @@ const User = require('../models/User');
 const user = require('../resolvers/user');
 const path = require('path');
 
-const base = require('airtable').base('appQMsMsx6eE2CMWF');
+const base = require('airtable').base(process.env.AIRTABLE_API_KEY);
 
 const bases = [
   'Personal Care & Beauty',
