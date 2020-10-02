@@ -185,7 +185,7 @@ module.exports = {
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
-          active: facebookId || googleId,
+          isActive: facebookId || googleId,
           confirmToken:
             !facebookId && !googleId
               ? null
