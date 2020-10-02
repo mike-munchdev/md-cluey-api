@@ -16,12 +16,12 @@ module.exports.sendMail = (mail) => {
 
       const message = {
         from: mail.mailFrom,
-        to:  mail.mailTo,
-        subject:  mail.subject,
-        text:  mail.text
-        html:  mail.html,
-        cc:  mail.cc,
-        bcc:  mail.bcc,
+        to: mail.mailTo,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html,
+        cc: mail.cc,
+        bcc: mail.bcc,
       };
 
       await transporter.sendMail(message);

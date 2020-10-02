@@ -185,27 +185,33 @@ module.exports = {
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
-          confirmToken: randomstring.generate({
-            length: 12,
-            charset: 'alphanumeric',
-          }),
+          active: facebookId || googleId,
+          confirmToken:
+            !facebookId && !googleId
+              ? null
+              : randomstring.generate({
+                  length: 12,
+                  charset: 'alphanumeric',
+                }),
         });
 
-        // TODO: add mail to queue
-        const mail = await Mail.create({
-          mailFrom: process.env.MAIL_FROM_ADDRESS,
-          mailTo: user.email,
-          subject: RESPONSES.EMAIL.SIGN_UP_EMAIL.subject,
-          html: RESPONSES.EMAIL.SIGN_UP_EMAIL.body
-            .replace(
-              '{REGISTER_URL}',
-              `${process.env.REGISTER_URL}/${user.confirmToken}`
-            )
-            .replace('{COMPANY_INFO}', `${process.env.COMPANY_INFO}`)
-            .replace('{SOCIAL_MEDIA_LINKS}', ''),
-        });
+        if (!facebookId && !googleId) {
+          // TODO: add mail to queue
+          const mail = await Mail.create({
+            mailFrom: process.env.MAIL_FROM_ADDRESS,
+            mailTo: user.email,
+            subject: RESPONSES.EMAIL.SIGN_UP_EMAIL.subject,
+            html: RESPONSES.EMAIL.SIGN_UP_EMAIL.body
+              .replace(
+                '{REGISTER_URL}',
+                `${process.env.REGISTER_URL}/${user.confirmToken}`
+              )
+              .replace('{COMPANY_INFO}', `${process.env.COMPANY_INFO}`)
+              .replace('{SOCIAL_MEDIA_LINKS}', ''),
+          });
 
-        await sendMail(mail);
+          await sendMail(mail);
+        }
         return createGeneralResponse({
           ok: true,
           message: RESPONSES.USER.SIGNUP_SUCCESSFUL,
