@@ -160,6 +160,7 @@ module.exports = {
           googleAuthToken,
         } = input;
 
+        let isActive = false;
         if (facebookId && facebookAuthToken) {
           // TODO: check for unique facebookId
           const userWithFacebookIdCount = await User.countDocuments({
@@ -167,6 +168,7 @@ module.exports = {
           });
           if (userWithFacebookIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_FACEBOOK_TAKEN);
+          isActive = true;
         } else if (googleAuthToken && googleId) {
           // TODO: check for unique facebookId
           const userWithGoogleIdCount = await User.countDocuments({
@@ -174,6 +176,7 @@ module.exports = {
           });
           if (userWithGoogleIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_GOOGLE_TAKEN);
+          isActive = true;
         } else {
           // TODO: check for unique email
           const userWithEmailCount = await User.countDocuments({
@@ -185,7 +188,7 @@ module.exports = {
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
-          isActive: facebookId || googleId,
+          isActive,
           confirmToken:
             !facebookId && !googleId
               ? null
