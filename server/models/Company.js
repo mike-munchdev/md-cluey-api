@@ -19,23 +19,21 @@ const CompanySchema = new Schema({
       ref: 'Category',
     },
   ],
+  parentCompanies: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
 CompanySchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('CompanySchema: transform');
+
   //Rename fields
   obj.id = obj._id;
-
-  // if (obj.parentCompanies) {
-  //   obj.parentCompanies = obj.parentCompanies.map((c) => {
-  //     c.id = c._id;
-  //     delete c._id;
-  //     return c;
-  //   });
-  // }
 
   delete obj._id;
 
