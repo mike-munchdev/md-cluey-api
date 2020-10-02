@@ -17,6 +17,7 @@ const {
 const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
 const Company = require('../models/Company');
+const { sendMail } = require('../utils/mail');
 
 module.exports = {
   Query: {
@@ -204,6 +205,7 @@ module.exports = {
             .replace('{SOCIAL_MEDIA_LINKS}', ''),
         });
 
+        await sendMail(mail);
         return createGeneralResponse({
           ok: true,
           message: RESPONSES.USER.SIGNUP_SUCCESSFUL,
