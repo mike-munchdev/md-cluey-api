@@ -23,23 +23,48 @@ module.exports = {
     ) => {
       try {
         await connectDatabase();
-
+        console.log('getUserToken');
         let user;
         if (facebookId && facebookAuthToken) {
+          console.log('facebook: getUserToken', facebookId);
           const response = await axios.get(
             `https://graph.facebook.com/me?access_token=${facebookAuthToken}&fields=id,first_name,last_name,email`
           );
 
           const { id, email } = response.data;
-
           user = await User.findOne({
             facebookId: id,
             email,
+          }).populate({
+            path: 'companyResponses',
+            populate: {
+              path: 'company',
+            },
           });
 
+          console.log('getUserToken: user', user);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else if (googleAuthToken && googleId) {
+          console.log('google: getUserToken', googleId);
+          const response = await axios.get(
+            `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${googleAuthToken}`
+          );
+
+          const { id, email } = response.data;
+          user = await User.findOne({
+            facebookId: id,
+            email,
+          }).populate({
+            path: 'companyResponses',
+            populate: {
+              path: 'company',
+            },
+          });
+
+          console.log('getUserToken: user', user);
+          if (!user.isActive)
+            throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else {
           user = await User.findOne({ email });
           if (!user.isActive)
@@ -62,6 +87,7 @@ module.exports = {
           },
           type: 'User',
         });
+        console.log('getUserToken: token', token);
 
         return createAuthenticationResponse({
           ok: true,

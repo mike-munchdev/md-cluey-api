@@ -19,25 +19,50 @@ const CompanySchema = new Schema({
       ref: 'Category',
     },
   ],
+  parentCompanies: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'ParentCompany',
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
 CompanySchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('CompanySchema: transform');
+  console.log('CompanySchema transform');
   //Rename fields
   obj.id = obj._id;
 
-  // if (obj.parentCompanies) {
-  //   obj.parentCompanies = obj.parentCompanies.map((c) => {
-  //     c.id = c._id;
-  //     delete c._id;
-  //     return c;
-  //   });
-  // }
+  if (obj.productTypes) {
+    obj.productTypes = obj.productTypes.map((c) => {
+      c.id = c._id;
+      // delete c._id;
+      return c;
+    });
+  }
 
-  delete obj._id;
+  if (obj.categories) {
+    obj.categories = obj.categories.map((c) => {
+      c.id = c._id;
+      // delete c._id;
+      return c;
+    });
+  }
+
+  if (obj.parentCompanies) {
+    obj.parentCompanies = obj.parentCompanies.map((c) => {
+      c.id = c._id;
+      if (c.politicalContributions) {
+        c.politicalContributions = c.politicalContributions.map((p) => {
+          p.id = p._id;
+          return p;
+        });
+      }
+      return c;
+    });
+  }
 
   return obj;
 });

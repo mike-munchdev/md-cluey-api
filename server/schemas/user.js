@@ -15,7 +15,7 @@ const typeDefs = gql`
     googleId: String
     facebookId: String
     pushTokens: [String!]
-    customerResponses: [ResponseToCompany!]
+    companyResponses: [ResponseToCompany!]
     confirmToken: String
     isProfilePublic: Boolean
     isActive: Boolean

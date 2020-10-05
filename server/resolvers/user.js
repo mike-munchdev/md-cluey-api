@@ -17,6 +17,7 @@ const {
 const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
 const Company = require('../models/Company');
+const { sendMail } = require('../utils/mail');
 
 module.exports = {
   Query: {
@@ -47,18 +48,18 @@ module.exports = {
         console.log('getUserCompanyResponses', userId);
         // TODO: check for accounts in db for this user/code
         const user = await User.findById(userId).populate({
-          path: 'responses',
+          path: 'companyResponses',
           populate: {
             path: 'company',
           },
         });
 
-        console.log('user', user.responses);
+        console.log('user', user.companyResponses);
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
         return createCompanyResponsesResponse({
           ok: true,
-          companyResponses: user.responses,
+          companyResponses: user.companyResponses,
         });
       } catch (error) {
         return createCompanyResponsesResponse({
@@ -127,7 +128,12 @@ module.exports = {
           }
         );
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).populate({
+          path: 'companyResponses',
+          populate: {
+            path: 'company',
+          },
+        });
 
         return createUserResponse({
           ok: true,
@@ -154,6 +160,7 @@ module.exports = {
           googleAuthToken,
         } = input;
 
+        let isActive = false;
         if (facebookId && facebookAuthToken) {
           // TODO: check for unique facebookId
           const userWithFacebookIdCount = await User.countDocuments({
@@ -161,6 +168,7 @@ module.exports = {
           });
           if (userWithFacebookIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_FACEBOOK_TAKEN);
+          isActive = true;
         } else if (googleAuthToken && googleId) {
           // TODO: check for unique facebookId
           const userWithGoogleIdCount = await User.countDocuments({
@@ -168,6 +176,7 @@ module.exports = {
           });
           if (userWithGoogleIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_GOOGLE_TAKEN);
+          isActive = true;
         } else {
           // TODO: check for unique email
           const userWithEmailCount = await User.countDocuments({
@@ -179,26 +188,33 @@ module.exports = {
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
-          confirmToken: randomstring.generate({
-            length: 12,
-            charset: 'alphanumeric',
-          }),
+          isActive,
+          confirmToken:
+            !facebookId && !googleId
+              ? null
+              : randomstring.generate({
+                  length: 12,
+                  charset: 'alphanumeric',
+                }),
         });
 
-        // TODO: add mail to queue
-        const mail = await Mail.create({
-          mailFrom: process.env.MAIL_FROM_ADDRESS,
-          mailTo: user.email,
-          subject: RESPONSES.EMAIL.SIGN_UP_EMAIL.subject,
-          html: RESPONSES.EMAIL.SIGN_UP_EMAIL.body
-            .replace(
-              '{REGISTER_URL}',
-              `${process.env.REGISTER_URL}/${user.confirmToken}`
-            )
-            .replace('{COMPANY_INFO}', `${process.env.COMPANY_INFO}`)
-            .replace('{SOCIAL_MEDIA_LINKS}', ''),
-        });
+        if (!facebookId && !googleId) {
+          // TODO: add mail to queue
+          const mail = await Mail.create({
+            mailFrom: process.env.MAIL_FROM_ADDRESS,
+            mailTo: user.email,
+            subject: RESPONSES.EMAIL.SIGN_UP_EMAIL.subject,
+            html: RESPONSES.EMAIL.SIGN_UP_EMAIL.body
+              .replace(
+                '{REGISTER_URL}',
+                `${process.env.REGISTER_URL}/${user.confirmToken}`
+              )
+              .replace('{COMPANY_INFO}', `${process.env.COMPANY_INFO}`)
+              .replace('{SOCIAL_MEDIA_LINKS}', ''),
+          });
 
+          await sendMail(mail);
+        }
         return createGeneralResponse({
           ok: true,
           message: RESPONSES.USER.SIGNUP_SUCCESSFUL,
@@ -276,7 +292,7 @@ module.exports = {
         console.log('updateCompanyResponseForUser');
 
         let user = await User.findById(userId).populate({
-          path: 'responses',
+          path: 'companyResponses',
           populate: {
             path: 'company',
           },
@@ -288,25 +304,32 @@ module.exports = {
         if (!company)
           throw new Error(ERRORS.COMPANY.NOT_FOUND_WITH_PROVIDED_INFO);
 
-        const existingResponseIndex = user.responses.findIndex((r) => {
+        const existingResponseIndex = user.companyResponses.findIndex((r) => {
           return r.company._id.toString() === company._id.toString();
         });
 
         let returnIndex = existingResponseIndex;
         if (existingResponseIndex >= 0) {
-          user.responses[existingResponseIndex].response = response;
-          user.responses[existingResponseIndex].updatedAt = Date.now();
+          user.companyResponses[existingResponseIndex].response = response;
+          user.companyResponses[existingResponseIndex].updatedAt = Date.now();
         } else {
-          user.responses.push({ company: company._id, response });
-          returnIndex = user.responses.length - 1;
+          user.companyResponses.push({ company: company._id, response });
+          returnIndex = user.companyResponses.length - 1;
         }
 
-        console.log('user.responses', user.responses);
+        console.log('user.companyResponses', user.companyResponses);
         await user.save();
-        console.log('user.responses', user.responses);
+
+        const returnUser = await User.findById(userId).populate({
+          path: 'companyResponses',
+          populate: {
+            path: 'company',
+          },
+        });
+        console.log('returnUser.companyResponses', returnUser.companyResponses);
         return createCompanyResponseResponse({
           ok: true,
-          companyResponse: user.responses[returnIndex].transform(),
+          companyResponse: returnUser.companyResponses[returnIndex].transform(),
         });
       } catch (error) {
         console.log('error', error);

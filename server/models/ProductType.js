@@ -12,7 +12,7 @@ const ProductTypeSchema = new Schema({
 
 ProductTypeSchema.method('transform', function () {
   let obj = this.toObject();
-  // console.log('ProductTypeSchema: transform');
+
   //Rename fields
   obj.id = obj._id;
 

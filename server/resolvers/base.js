@@ -22,9 +22,9 @@ module.exports = {
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
 
         await importCategories();
+        await importParentCompanies();
         await importProductTypes();
         await importCompanies();
-        await importParentCompanies();
         await importTags();
         await importProducts();
 

@@ -44,7 +44,7 @@ const UserSchema = new Schema({
   isActive: { type: Boolean, default: false },
   confirmToken: { type: String },
   pushTokens: [String],
-  responses: [companyResponseSchema],
+  companyResponses: [companyResponseSchema],
   isProfilePublic: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -62,13 +62,13 @@ UserSchema.pre('save', async function () {
 UserSchema.method('transform', function () {
   let obj = this.toObject();
   console.log('UserSchema: transform');
-  if (obj.responses) {
-    obj.responses = obj.responses.map((r) => {
+  if (obj.companyResponses) {
+    obj.companyResponses = obj.companyResponses.map((r) => {
       r.id = r._id;
       r.companyId = r.company;
       delete r._id;
       r.company.id = r.company._id;
-      console.log('r.company', r.company);
+      // console.log('r.company', r.company);
       // delete r.company;
       return r;
     });
@@ -83,17 +83,10 @@ UserSchema.method('transform', function () {
 
 companyResponseSchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('companyResponseSchema: transform');
+  console.log('companyResponseSchema: transform', obj);
+
   obj.company.id = obj.company._id;
-  // if (obj.responses) {
-  //   obj.responses = obj.responses.map((r) => {
-  //     r.id = r._id;
-  //     r.companyId = r.company;
-  //     delete r._id;
-  //     // delete r.company;
-  //     return r;
-  //   });
-  // }
+
   //Rename fields
   obj.id = obj._id;
   delete obj._id;
