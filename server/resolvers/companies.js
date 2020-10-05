@@ -17,20 +17,36 @@ module.exports = {
       try {
         await connectDatabase();
 
+        console.log('getCompaniesByName');
         let companies;
 
         if (exact) {
           companies = await Company.find({ name })
-            // .populate('parentCompanies')
+            .populate({
+              path: 'parentCompanies',
+              populate: {
+                path: 'politicalContributions',
+              },
+            })
+            .populate('categories')
+            .populate('productTypes')
             .populate('tags');
         } else {
           companies = await Company.find({
             name: { $regex: name, $options: 'i' },
           })
-            // .populate('parentCompanies')
+            .populate({
+              path: 'parentCompanies',
+              populate: {
+                path: 'politicalContributions',
+              },
+            })
+            .populate('categories')
+            .populate('productTypes')
             .populate('tags');
         }
 
+        console.log('companies', companies[0].categories[0]);
         return createCompaniesResponse({
           ok: true,
           companies: companies ? companies.map((c) => c.transform()) : [],
@@ -47,10 +63,18 @@ module.exports = {
       try {
         await connectDatabase();
 
-        const companies = await Company.find({ categories: id });
-        // .populate('parentCompanies')
-        // .populate('tags');
+        const companies = await Company.find({ categories: id })
+          .populate({
+            path: 'parentCompanies',
+            populate: {
+              path: 'politicalContributions',
+            },
+          })
+          .populate('categories')
+          .populate('productTypes')
+          .populate('tags');
 
+        console.log('companies', companies[50].parentCompanies[0]);
         return createCompaniesResponse({
           ok: true,
           companies: companies ? companies.map((c) => c.transform()) : [],
@@ -66,7 +90,16 @@ module.exports = {
       try {
         await connectDatabase();
 
-        const companies = await Company.find({ productTypes: id });
+        const companies = await Company.find({ productTypes: id })
+          .populate({
+            path: 'parentCompanies',
+            populate: {
+              path: 'politicalContributions',
+            },
+          })
+          .populate('categories')
+          .populate('productTypes')
+          .populate('tags');
 
         return createCompaniesResponse({
           ok: true,
@@ -83,7 +116,16 @@ module.exports = {
       try {
         await connectDatabase();
 
-        const company = await Company.findById(id);
+        const company = await Company.findById(id)
+          .populate({
+            path: 'parentCompanies',
+            populate: {
+              path: 'politicalContributions',
+            },
+          })
+          .populate('categories')
+          .populate('productTypes')
+          .populate('tags');
 
         return createCompanyResponse({
           ok: true,

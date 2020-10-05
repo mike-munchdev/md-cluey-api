@@ -7,6 +7,9 @@ const typeDefs = gql`
     name: String!
     brandUrl: String
     brandLogoUrl: String
+    parentCompanies: [ParentCompany!]
+    productTypes: [ProductType!]
+    categories: [Category!]
   }
 
   type CompaniesResponse {
