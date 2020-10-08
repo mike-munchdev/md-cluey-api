@@ -13,12 +13,14 @@ module.exports.createFriendsResponse = ({
   ok,
   friends = null,
   error = null,
+  searchText = null,
 }) => {
   if (error) Bugsnag.notify(error);
   return {
     ok,
     friends,
     error,
+    searchText,
   };
 };
 
@@ -63,6 +65,7 @@ module.exports.createProductsResponse = ({
     ok,
     products,
     error,
+    searchText,
   };
 };
 module.exports.createCompaniesResponse = ({
@@ -76,6 +79,7 @@ module.exports.createCompaniesResponse = ({
     ok,
     companies,
     error,
+    searchText,
   };
 };
 module.exports.createCompanyResponse = ({
@@ -108,7 +112,6 @@ module.exports.createProductTypesResponse = ({
   ok,
   productTypes = null,
   error = null,
-  searchText = null,
 }) => {
   if (error) Bugsnag.notify(error);
   return {

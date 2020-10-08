@@ -45,6 +45,7 @@ const typeDefs = gql`
   type FriendsResponse {
     ok: Boolean!
     friends: [Friend!]
+    searchText: String
     error: Error
   }
 
@@ -118,7 +119,10 @@ const typeDefs = gql`
     getUserById(userId: String!): UserResponse!
     getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
     getUserFriends(userId: String!): FriendsResponse!
-    getActiveUsersByName(name: String!, exact: Boolean): FriendsResponse!
+    getPublicAndActiveUsersByName(
+      name: String!
+      exact: Boolean
+    ): FriendsResponse!
   }
 
   type Mutation {

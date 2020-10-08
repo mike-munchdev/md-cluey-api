@@ -35,6 +35,8 @@ module.exports = {
           'username firstName lastName'
         );
 
+        console.log('users', users);
+
         return createFriendsResponse({
           ok: true,
           friends: users.map((u) => u.transform()),
@@ -46,7 +48,11 @@ module.exports = {
         });
       }
     },
-    getActiveUsersByName: async (parent, { exact, name }, { isAdmin }) => {
+    getPublicAndActiveUsersByName: async (
+      parent,
+      { exact, name },
+      { isAdmin }
+    ) => {
       try {
         await connectDatabase();
         let users;
@@ -54,6 +60,7 @@ module.exports = {
           users = await User.find(
             {
               isActive: true,
+              isProfilePublic: true,
               $or: [
                 { username: name },
                 { firstName: name },
@@ -70,6 +77,7 @@ module.exports = {
           users = await User.find(
             {
               isActive: true,
+              isProfilePublic: true,
               $or: [
                 { username: { $regex: name, $options: 'i' } },
                 { firstName: { $regex: name, $options: 'i' } },
