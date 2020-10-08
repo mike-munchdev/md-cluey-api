@@ -10,6 +10,7 @@ const typeDefs = gql`
     parentCompanies: [ParentCompany!]
     productTypes: [ProductType!]
     categories: [Category!]
+    isActive: Boolean
   }
 
   type CompaniesResponse {

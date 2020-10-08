@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { default: validatorF } = require('validator');
+const { transformCompany } = require('../utils/transform');
 
 const Schema = mongoose.Schema;
 
@@ -24,6 +25,9 @@ const UserSchema = new Schema({
     },
     unique: true,
   },
+  username: {
+    type: String,
+  },
   password: { type: String, required: false },
   firstName: { type: String, required: false },
   middleName: { type: String, required: false },
@@ -37,10 +41,10 @@ const UserSchema = new Schema({
   },
   googleId: { type: String },
   googleAuthToken: { type: String },
-  // googleAuthTokenExpiry: { type: Date },
+
   facebookId: { type: String },
   facebookAuthToken: { type: String },
-  // facebookAuthTokenExpiry: { type: Date },
+
   isActive: { type: Boolean, default: false },
   confirmToken: { type: String },
   pushTokens: [String],
@@ -65,11 +69,11 @@ UserSchema.method('transform', function () {
   if (obj.companyResponses) {
     obj.companyResponses = obj.companyResponses.map((r) => {
       r.id = r._id;
-      r.companyId = r.company;
-      delete r._id;
+      // r.company = transformCompany(r.company);
+      r.companyId = r.company._id;
+      // delete r._id;
       r.company.id = r.company._id;
-      // console.log('r.company', r.company);
-      // delete r.company;
+
       return r;
     });
   }
@@ -83,7 +87,6 @@ UserSchema.method('transform', function () {
 
 companyResponseSchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('companyResponseSchema: transform', obj);
 
   obj.company.id = obj.company._id;
 

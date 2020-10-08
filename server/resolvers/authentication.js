@@ -23,10 +23,9 @@ module.exports = {
     ) => {
       try {
         await connectDatabase();
-        console.log('getUserToken');
+
         let user;
         if (facebookId && facebookAuthToken) {
-          console.log('facebook: getUserToken', facebookId);
           const response = await axios.get(
             `https://graph.facebook.com/me?access_token=${facebookAuthToken}&fields=id,first_name,last_name,email`
           );
@@ -42,11 +41,9 @@ module.exports = {
             },
           });
 
-          console.log('getUserToken: user', user);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else if (googleAuthToken && googleId) {
-          console.log('google: getUserToken', googleId);
           const response = await axios.get(
             `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${googleAuthToken}`
           );
@@ -62,7 +59,6 @@ module.exports = {
             },
           });
 
-          console.log('getUserToken: user', user);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else {
@@ -87,7 +83,6 @@ module.exports = {
           },
           type: 'User',
         });
-        console.log('getUserToken: token', token);
 
         return createAuthenticationResponse({
           ok: true,

@@ -27,16 +27,38 @@ Airtable.configure({
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID);
 
 const bases = [
-  'Retailers & Marketplaces (COMPLETE)',
-  'Personal Care & Beauty (COMPLETE)',
-  // 'Health & Nutrition',
-  // 'Pet Care',
-  // 'Household Goods',
-  // 'Baby & Kids',
-  // 'Outdoors & Backyard',
-  // 'Furniture, Home Appliances, Bed, & Bath',
-  // 'Electronics',
-  // 'Grocery',
+  {
+    name: 'Retailers & Marketplaces (COMPLETE)',
+    isActive: true,
+    logoUrl: 'retailers.jpg',
+  },
+  {
+    name: 'Personal Care & Beauty (COMPLETE)',
+    isActive: true,
+    logoUrl: 'beauty.jpg',
+  },
+  { name: 'Health & Nutrition', isActive: false, logoUrl: 'health.jpg' },
+  { name: 'Pet Care', isActive: false, logoUrl: 'pet-care.jpg' },
+  { name: 'Household Goods', isActive: false, logoUrl: 'household.jpg' },
+  { name: 'Baby & Kids', isActive: false, logoUrl: 'baby.jpg' },
+  { name: 'Outdoors & Backyard', isActive: false, logoUrl: 'outdoors.jpg' },
+  {
+    name: 'Furniture, Home Appliances, Bed, & Bath',
+    isActive: false,
+    logoUrl: 'furniture.jpg',
+  },
+  { name: 'Electronics', isActive: false, logoUrl: 'electronics.jpg' },
+  { name: 'Grocery', isActive: false, logoUrl: 'grocery.jpg' },
+  {
+    name: 'Dining & Entertainment',
+    isActive: false,
+    logoUrl: 'dining-entertainment.jpg',
+  },
+  {
+    name: 'Apparel, Shoes, & Accessories',
+    isActive: false,
+    logoUrl: 'apparel.jpg',
+  },
 ];
 
 const getOpenSecretsData = (data, year, companyName) => {
@@ -88,11 +110,16 @@ module.exports.importCategories = async () => {
 
       await asyncForEach(bases, async (b, index, array) => {
         try {
+          const isActive = b.name.indexOf('(COMPLETE)') >= 0;
           await Category.findOneAndUpdate(
             {
-              name: b.replace(' (COMPLETE)', ''),
+              name: b.name.replace(' (COMPLETE)', ''),
             },
-            { name: b.replace(' (COMPLETE)', '') },
+            {
+              name: b.name.replace(' (COMPLETE)', ''),
+              isActive,
+              logoUrl: b.logoUrl,
+            },
             { upsert: true }
           );
         } catch (error) {
@@ -448,165 +475,71 @@ module.exports.importProductTypes = async () => {
 };
 
 // #7
-// module.exports.importLogos = async () => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       (async () => {
-//         const getImagesLimited = limiter(async (companies) => {
-//           await asyncForEach(companies, async (company, index, array) => {
-//             try {
-//               const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
-//               console.log(
-//                 `starting image lookup for ${company.name} with for ${brandNameUrl}`
-//               );
-//               const upLeadResponse = await axios.get(
-//                 `https://logo.uplead.com/${brandNameUrl}`,
-//                 {
-//                   responseType: 'stream',
-//                 }
-//               );
-//               console.log('upLeadResponse', upLeadResponse);
-
-//               upLeadResponse.data.pipe(
-//                 fs.createWriteStream(
-//                   path.join(
-//                     __dirname,
-//                     '../../',
-//                     'public/logos',
-//                     `${brandNameUrl}.png`
-//                   )
-//                 )
-//               );
-
-//               // const riteKitResponse = await axios.get(
-//               //   `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=bfa908bdd61498f0359b33d67de29ec128ba65c7bb09`
-//               // );
-
-//               // // console.log('riteKitResponse', riteKitResponse.data);
-//               // if (riteKitResponse.data.url) {
-//               //   const imageResponse = await axios.get(
-//               //     riteKitResponse.data.url,
-//               //     {
-//               //       responseType: 'stream',
-//               //     }
-//               //   );
-//               //   imageResponse.data.pipe(
-//               //     fs.createWriteStream(
-//               //       path.join(
-//               //         __dirname,
-//               //         '../../',
-//               //         'public/logos',
-//               //         `${brandNameUrl}.png`
-//               //       )
-//               //     )
-//               //   );
-//               // }
-//               console.log(`saving ${company.name} image ${brandNameUrl}.png`);
-//               await Company.findOneAndUpdate(
-//                 { _id: company._id },
-//                 { brandLogoUrl: `${brandNameUrl}.png` }
-//               );
-
-//               console.log(`done with ${company.name}`);
-//             } catch (error) {
-//               console.log('error', error);
-//             }
-//           });
-//         }, 500);
-
-//         const companies = await Company.find({
-//           brandUrl: { $ne: null },
-//           brandLogoUrl: { $eq: null },
-//         });
-//         let start = 0;
-
-//         const last = companies.length - 1;
-//         const batchSize = 6;
-//         let end = batchSize;
-//         while (end < last) {
-//           getImagesLimited(companies.slice(start, end));
-//           start = end;
-//           end += batchSize;
-//         }
-//       })();
-
-//       // console.log(`Done.`);
-//       resolve();
-//     } catch (error) {
-//       console.log('error', error);
-//       reject(error);
-//     }
-//   });
-// };
-
 module.exports.importLogos = async () => {
   return new Promise(async (resolve, reject) => {
     try {
-      const companies = await Company.find({
-        brandUrl: { $ne: null },
-        brandLogoUrl: { $eq: null },
-      });
-      await asyncForEach(companies, async (company, index, array) => {
-        try {
-          const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
-          console.log(
-            `starting image lookup for ${company.name} with for ${brandNameUrl}`
-          );
-          const upLeadResponse = await axios.get(
-            `https://logo.uplead.com/${brandNameUrl}`,
-            {
-              responseType: 'stream',
+      (async () => {
+        const getImagesLimited = limiter(async (companies) => {
+          await asyncForEach(companies, async (company, index, array) => {
+            try {
+              const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+              console.log(
+                `starting image lookup for ${company.name} with for ${brandNameUrl}`
+              );
+
+              const riteKitResponse = await axios.get(
+                `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=${process.env.RITE_KIT_CLIENT_ID}`
+              );
+
+              // console.log('riteKitResponse', riteKitResponse.data);
+              if (riteKitResponse.data.url) {
+                const imageResponse = await axios.get(
+                  riteKitResponse.data.url,
+                  {
+                    responseType: 'stream',
+                  }
+                );
+                imageResponse.data.pipe(
+                  fs.createWriteStream(
+                    path.join(
+                      __dirname,
+                      '../../',
+                      'public/logos',
+                      `${brandNameUrl}.png`
+                    )
+                  )
+                );
+              }
+              console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+              await Company.findOneAndUpdate(
+                { _id: company._id },
+                { brandLogoUrl: `${brandNameUrl}.png` }
+              );
+
+              console.log(`done with ${company.name}`);
+            } catch (error) {
+              console.log('error', error);
             }
-          );
-          // console.log('upLeadResponse', upLeadResponse);
+          });
+        }, 60000);
 
-          upLeadResponse.data.pipe(
-            fs.createWriteStream(
-              path.join(
-                __dirname,
-                '../../',
-                'public/logos',
-                `${brandNameUrl}.png`
-              )
-            )
-          );
+        const companies = await Company.find({
+          // brandUrl: { $ne: null },
+          // brandLogoUrl: { $eq: null },
+        });
+        let start = 0;
 
-          // const riteKitResponse = await axios.get(
-          //   `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=bfa908bdd61498f0359b33d67de29ec128ba65c7bb09`
-          // );
-
-          // // console.log('riteKitResponse', riteKitResponse.data);
-          // if (riteKitResponse.data.url) {
-          //   const imageResponse = await axios.get(
-          //     riteKitResponse.data.url,
-          //     {
-          //       responseType: 'stream',
-          //     }
-          //   );
-          //   imageResponse.data.pipe(
-          //     fs.createWriteStream(
-          //       path.join(
-          //         __dirname,
-          //         '../../',
-          //         'public/logos',
-          //         `${brandNameUrl}.png`
-          //       )
-          //     )
-          //   );
-          // }
-          console.log(`saving ${company.name} image ${brandNameUrl}.png`);
-          await Company.findOneAndUpdate(
-            { _id: company._id },
-            { brandLogoUrl: `${brandNameUrl}.png` }
-          );
-
-          console.log(`done with ${company.name}`);
-        } catch (error) {
-          console.log('error', error);
+        const last = companies.length - 1;
+        const batchSize = 6;
+        let end = batchSize;
+        while (end < last) {
+          getImagesLimited(companies.slice(start, end));
+          start = end;
+          end += batchSize;
         }
-      });
+      })();
 
-      console.log(`Done.`);
+      // console.log(`Done.`);
       resolve();
     } catch (error) {
       console.log('error', error);
@@ -614,3 +547,55 @@ module.exports.importLogos = async () => {
     }
   });
 };
+
+// module.exports.importLogos = async () => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const companies = await Company.find({
+//         brandUrl: { $ne: null },
+//         brandLogoUrl: { $eq: null },
+//       });
+//       await asyncForEach(companies, async (company, index, array) => {
+//         try {
+//           const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+//           console.log(
+//             `starting image lookup for ${company.name} with for ${brandNameUrl}`
+//           );
+//           const upLeadResponse = await axios.get(
+//             `https://logo.uplead.com/${brandNameUrl}`,
+//             {
+//               responseType: 'stream',
+//             }
+//           );
+
+//           upLeadResponse.data.pipe(
+//             fs.createWriteStream(
+//               path.join(
+//                 __dirname,
+//                 '../../',
+//                 'public/logos',
+//                 `${brandNameUrl}.png`
+//               )
+//             )
+//           );
+
+//           console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+//           await Company.findOneAndUpdate(
+//             { _id: company._id },
+//             { brandLogoUrl: `${brandNameUrl}.png` }
+//           );
+
+//           console.log(`done with ${company.name}`);
+//         } catch (error) {
+//           console.log('error', error);
+//         }
+//       });
+
+//       console.log(`Done.`);
+//       resolve();
+//     } catch (error) {
+//       console.log('error', error);
+//       reject(error);
+//     }
+//   });
+// };
