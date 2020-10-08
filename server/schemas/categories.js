@@ -5,8 +5,8 @@ const typeDefs = gql`
   type Category {
     id: ID!
     name: String!
-    slug: String
     logoUrl: String
+    isActive: Boolean
   }
 
   type CategoriesResponse {

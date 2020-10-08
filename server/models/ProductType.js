@@ -6,6 +6,7 @@ const Schema = mongoose.Schema;
 const ProductTypeSchema = new Schema({
   airTableId: { type: String },
   name: { type: String, required: true },
+  isActive: { type: Boolean },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

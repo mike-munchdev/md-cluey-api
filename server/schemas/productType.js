@@ -5,6 +5,7 @@ const typeDefs = gql`
   type ProductType {
     id: ID!
     name: String!
+    isActive: Boolean
   }
 
   type ProductTypesResponse {

@@ -5,6 +5,7 @@ const typeDefs = gql`
   type User {
     id: ID!
     email: String
+    username: String
     firstName: String!
     middleName: String
     lastName: String!
@@ -24,8 +25,7 @@ const typeDefs = gql`
 
   type ResponseToCompany {
     id: ID!
-
-    company: Company!
+    companyId: String!
     response: String!
   }
 
@@ -60,6 +60,7 @@ const typeDefs = gql`
   input UpdateUserInput {
     userId: String!
     email: String
+    username: String
     firstName: String
     middleName: String
     lastName: String

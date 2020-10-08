@@ -14,6 +14,7 @@ module.exports.ERRORS = {
     ACCOUNT_NOT_ACTIVATED: 'Your account is not active.',
     PUSH_TOKEN_ALREADY_EXISTS: 'Push token already exists.',
     CONFIRM_TOKEN_NOT_FOUND: 'Confirm token not found.',
+    USERNAME_ALREADY_TAKEN: 'The username you have selected is already taken.',
   },
   AUTH: {
     DENIED: 'Access denied',

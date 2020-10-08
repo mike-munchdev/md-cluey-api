@@ -12,9 +12,11 @@ const CategorySchema = new Schema({
       ref: 'ProductType',
     },
   ],
+  isActive: { type: Boolean },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
+
 CategorySchema.method('transform', function () {
   let obj = this.toObject();
 

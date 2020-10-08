@@ -18,6 +18,7 @@ const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
 const Company = require('../models/Company');
 const { sendMail } = require('../utils/mail');
+const { isUserNameUnique } = require('../utils/users');
 
 module.exports = {
   Query: {
@@ -45,7 +46,6 @@ module.exports = {
       try {
         await connectDatabase();
 
-        console.log('getUserCompanyResponses', userId);
         // TODO: check for accounts in db for this user/code
         const user = await User.findById(userId).populate({
           path: 'companyResponses',
@@ -54,7 +54,6 @@ module.exports = {
           },
         });
 
-        console.log('user', user.companyResponses);
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
         return createCompanyResponsesResponse({
@@ -115,10 +114,15 @@ module.exports = {
     },
     updateUser: async (parent, { input }, { isAdmin }) => {
       try {
-        const { userId } = input;
+        const { userId, username } = input;
 
         if (!userId) throw new Error(ERRORS.USER.NOT_FOUND);
         await connectDatabase();
+        if (username) {
+          const userNameUnique = await isUserNameUnique(userId, username);
+          if (!userNameUnique)
+            throw new Error(ERRORS.USER.USERNAME_ALREADY_TAKEN);
+        }
 
         await User.findOneAndUpdate(
           { _id: new ObjectId(userId) },
@@ -289,8 +293,6 @@ module.exports = {
         await connectDatabase();
         const { userId, companyId, response } = input;
 
-        console.log('updateCompanyResponseForUser');
-
         let user = await User.findById(userId).populate({
           path: 'companyResponses',
           populate: {
@@ -317,7 +319,6 @@ module.exports = {
           returnIndex = user.companyResponses.length - 1;
         }
 
-        console.log('user.companyResponses', user.companyResponses);
         await user.save();
 
         const returnUser = await User.findById(userId).populate({

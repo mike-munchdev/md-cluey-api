@@ -13,10 +13,7 @@ const typeDefs = gql`
     id: ID!
     name: String!
   }
-  type ProductType {
-    id: ID!
-    name: String!
-  }
+
   type ProductsResponse {
     ok: Boolean!
     products: [Product!]

@@ -17,7 +17,6 @@ module.exports = {
       try {
         await connectDatabase();
 
-        console.log('getCompaniesByName');
         let companies;
 
         if (exact) {
@@ -46,7 +45,6 @@ module.exports = {
             .populate('tags');
         }
 
-        console.log('companies', companies[0].categories[0]);
         return createCompaniesResponse({
           ok: true,
           companies: companies ? companies.map((c) => c.transform()) : [],
@@ -74,7 +72,6 @@ module.exports = {
           .populate('productTypes')
           .populate('tags');
 
-        console.log('companies', companies[50].parentCompanies[0]);
         return createCompaniesResponse({
           ok: true,
           companies: companies ? companies.map((c) => c.transform()) : [],
