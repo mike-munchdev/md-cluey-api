@@ -15,12 +15,19 @@ const typeDefs = gql`
     gender: String
     googleId: String
     facebookId: String
-    pushTokens: [String!]
+    friends: [String!]
     companyResponses: [ResponseToCompany!]
     confirmToken: String
     isProfilePublic: Boolean
     isActive: Boolean
     createdAt: Date!
+  }
+
+  type Friend {
+    id: ID!
+    username: String
+    firstName: String!
+    lastName: String!
   }
 
   type ResponseToCompany {
@@ -32,6 +39,12 @@ const typeDefs = gql`
   type UserResponse {
     ok: Boolean!
     user: User
+    error: Error
+  }
+
+  type FriendsResponse {
+    ok: Boolean!
+    friends: [Friend!]
     error: Error
   }
 
@@ -104,6 +117,8 @@ const typeDefs = gql`
   type Query {
     getUserById(userId: String!): UserResponse!
     getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
+    getUserFriends(userId: String!): FriendsResponse!
+    getActiveUsersByName(name: String!, exact: Boolean): FriendsResponse!
   }
 
   type Mutation {

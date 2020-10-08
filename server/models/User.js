@@ -47,7 +47,7 @@ const UserSchema = new Schema({
 
   isActive: { type: Boolean, default: false },
   confirmToken: { type: String },
-  pushTokens: [String],
+  friends: [String],
   companyResponses: [companyResponseSchema],
   isProfilePublic: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },

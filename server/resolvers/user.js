@@ -13,6 +13,7 @@ const {
   createGeneralResponse,
   createCompanyResponseResponse,
   createCompanyResponsesResponse,
+  createFriendsResponse,
 } = require('../utils/responses');
 const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
@@ -22,6 +23,77 @@ const { isUserNameUnique } = require('../utils/users');
 
 module.exports = {
   Query: {
+    getUserFriends: async (parent, { userId }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        const user = await User.findById(userId, 'friends');
+        console.log('user', user);
+        if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
+
+        const users = await User.find(
+          { _id: { $in: user.friends } },
+          'username firstName lastName'
+        );
+
+        return createFriendsResponse({
+          ok: true,
+          friends: users.map((u) => u.transform()),
+        });
+      } catch (error) {
+        return createFriendsResponse({
+          ok: true,
+          error: convertError(error),
+        });
+      }
+    },
+    getActiveUsersByName: async (parent, { exact, name }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        let users;
+        if (exact) {
+          users = await User.find(
+            {
+              isActive: true,
+              $or: [
+                { username: name },
+                { firstName: name },
+                { lastName: name },
+              ],
+            },
+            'username firstName lastName'
+          ).limit(
+            process.env.FRIEND_SEARCH_LIMIT
+              ? parseInt(process.env.FRIEND_SEARCH_LIMIT)
+              : 50
+          );
+        } else {
+          users = await User.find(
+            {
+              isActive: true,
+              $or: [
+                { username: { $regex: name, $options: 'i' } },
+                { firstName: { $regex: name, $options: 'i' } },
+                { lastName: { $regex: name, $options: 'i' } },
+              ],
+            },
+            'username firstName lastName'
+          ).limit(
+            process.env.FRIEND_SEARCH_LIMIT
+              ? parseInt(process.env.FRIEND_SEARCH_LIMIT)
+              : 50
+          );
+        }
+        return createFriendsResponse({
+          ok: true,
+          friends: users.map((u) => u.transform()),
+        });
+      } catch (error) {
+        return createFriendsResponse({
+          ok: true,
+          error: convertError(error),
+        });
+      }
+    },
     getUserById: async (parent, { userId }, { isAdmin }) => {
       try {
         await connectDatabase();

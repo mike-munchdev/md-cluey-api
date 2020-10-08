@@ -9,6 +9,19 @@ module.exports.createUserResponse = ({ ok, user = null, error = null }) => {
   };
 };
 
+module.exports.createFriendsResponse = ({
+  ok,
+  friends = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    friends,
+    error,
+  };
+};
+
 module.exports.createGeneralResponse = ({
   ok,
   message = null,
