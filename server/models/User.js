@@ -88,6 +88,7 @@ UserSchema.method('transform', function () {
 companyResponseSchema.method('transform', function () {
   let obj = this.toObject();
 
+  obj.companyId = obj.company._id;
   obj.company.id = obj.company._id;
 
   //Rename fields
