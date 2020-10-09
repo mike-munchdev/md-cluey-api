@@ -37,11 +37,11 @@ module.exports = {
 
           const { id, email } = response.data;
 
-          console.log('id', id.length);
-          console.log('email', email.length);
+          console.log('id', id);
+          console.log('email', email);
           user = await User.findOne({
             facebookId: id,
-            email: email,
+            // email: email,
           }).populate({
             path: 'companyResponses',
             populate: {
