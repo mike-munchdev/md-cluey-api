@@ -29,7 +29,7 @@ const ParentCompanySchema = new Schema({
 
 ParentCompanySchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('ParentCompanySchema transform');
+
   //Rename fields
   obj.id = obj._id;
 

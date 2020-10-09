@@ -402,13 +402,12 @@ module.exports = {
             path: 'company',
           },
         });
-        console.log('returnUser.companyResponses', returnUser.companyResponses);
+
         return createCompanyResponseResponse({
           ok: true,
           companyResponse: returnUser.companyResponses[returnIndex].transform(),
         });
       } catch (error) {
-        console.log('error', error);
         return createCompanyResponseResponse({
           ok: false,
           error: convertError(error),

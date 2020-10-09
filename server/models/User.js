@@ -65,7 +65,7 @@ UserSchema.pre('save', async function () {
 
 UserSchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('UserSchema: transform');
+
   if (obj.companyResponses) {
     obj.companyResponses = obj.companyResponses.map((r) => {
       r.id = r._id;

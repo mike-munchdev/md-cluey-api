@@ -10,7 +10,6 @@ module.exports = {
   Mutation: {
     sendMail: async (parent, { input }, { isAdmin }) => {
       try {
-        console.log('log');
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
 
         await sendMail({
