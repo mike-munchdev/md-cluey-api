@@ -35,13 +35,8 @@ module.exports = {
             `https://graph.facebook.com/me?access_token=${facebookAuthToken}&fields=id,first_name,last_name,email`
           );
 
-          const { id, email } = response.data;
-
-          console.log('id', id);
-          console.log('email', email);
           user = await User.findOne({
-            facebookId: id,
-            // email: email,
+            email: response.data.email,
           }).populate({
             path: 'companyResponses',
             populate: {
