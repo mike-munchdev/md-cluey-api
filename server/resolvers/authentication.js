@@ -41,12 +41,13 @@ module.exports = {
           user = await User.findOne({
             facebookId: id,
             email,
-          }).populate({
-            path: 'companyResponses',
-            populate: {
-              path: 'company',
-            },
           });
+          // .populate({
+          //   path: 'companyResponses',
+          //   populate: {
+          //     path: 'company',
+          //   },
+          // });
 
           console.log('user', user);
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
