@@ -40,7 +40,7 @@ module.exports = {
           console.log('id, email', id, email);
           user = await User.findOne({
             facebookId: id,
-            email,
+            email: email,
           });
           // .populate({
           //   path: 'companyResponses',
