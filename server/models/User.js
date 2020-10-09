@@ -69,11 +69,11 @@ UserSchema.method('transform', function () {
   if (obj.companyResponses) {
     obj.companyResponses = obj.companyResponses.map((r) => {
       r.id = r._id;
-      // r.company = transformCompany(r.company);
+      const company = transformCompany(r.company);
+      r.company = company;
       r.companyId = r.company._id;
       // delete r._id;
-      r.company.id = r.company._id;
-
+      // r.company.id = r.company._id;
       return r;
     });
   }

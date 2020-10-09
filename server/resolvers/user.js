@@ -27,15 +27,13 @@ module.exports = {
       try {
         await connectDatabase();
         const user = await User.findById(userId, 'friends');
-        console.log('user', user);
+
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
         const users = await User.find(
           { _id: { $in: user.friends } },
           'username firstName lastName'
         );
-
-        console.log('users', users);
 
         return createFriendsResponse({
           ok: true,

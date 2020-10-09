@@ -1,6 +1,7 @@
 module.exports.transformCompany = (company) => {
   console.log('CompanySchema transform');
   //Rename fields
+
   company.id = company._id;
 
   if (company.productTypes) {
