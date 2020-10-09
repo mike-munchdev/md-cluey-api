@@ -37,7 +37,8 @@ module.exports = {
 
           const { id, email } = response.data;
 
-          console.log('id, email', id, email);
+          console.log('id', id.length);
+          console.log('email', email.length);
           user = await User.findOne({
             facebookId: id,
             email: email,
