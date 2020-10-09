@@ -48,6 +48,7 @@ module.exports = {
             },
           });
 
+          console.log('user', user);
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
