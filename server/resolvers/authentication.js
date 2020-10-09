@@ -24,6 +24,11 @@ module.exports = {
       try {
         await connectDatabase();
 
+        console.log('email', email);
+        console.log('facebookId', facebookId);
+        console.log('facebookAuthToken', facebookAuthToken);
+        console.log('googleAuthToken', googleAuthToken);
+        console.log('googleId', googleId);
         let user;
         if (facebookId && facebookAuthToken) {
           const response = await axios.get(
@@ -32,6 +37,7 @@ module.exports = {
 
           const { id, email } = response.data;
 
+          console.log('id, email', id, email);
           user = await User.findOne({
             facebookId: id,
             email,
