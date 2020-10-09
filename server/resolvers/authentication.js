@@ -6,6 +6,11 @@ const { generateToken } = require('../utils/authentication');
 const connectDatabase = require('../models/connectDatabase');
 const { createAuthenticationResponse } = require('../utils/responses');
 const User = require('../models/User');
+const {
+  companyResponse,
+  companyResponsesPopulate,
+} = require('../utils/populate');
+const { assignWith } = require('lodash');
 
 module.exports = {
   Query: {
@@ -32,12 +37,7 @@ module.exports = {
 
           user = await User.findOne({
             email: response.data.email,
-          }).populate({
-            path: 'companyResponses',
-            populate: {
-              path: 'company',
-            },
-          });
+          }).populate(companyResponsesPopulate);
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
           if (!user.isActive)
@@ -47,21 +47,16 @@ module.exports = {
             `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${googleAuthToken}`
           );
 
-          const { id, email } = response.data;
           user = await User.findOne({
-            facebookId: id,
-            email,
-          }).populate({
-            path: 'companyResponses',
-            populate: {
-              path: 'company',
-            },
+            // facebookId: id,
+            email: response.data.email,
           });
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else {
+          console.log('by email');
           user = await User.findOne({ email });
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);

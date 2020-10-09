@@ -16,6 +16,7 @@ const companyResponseSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
+
 const UserSchema = new Schema({
   email: {
     type: String,
@@ -66,15 +67,9 @@ UserSchema.pre('save', async function () {
 UserSchema.method('transform', function () {
   let obj = this.toObject();
 
-  if (obj.companyResponses) {
-    obj.companyResponses = obj.companyResponses.map((r) => {
-      r.id = r._id;
-      const company = transformCompany(r.company);
-      r.company = company;
-      r.companyId = r.company._id;
-      // delete r._id;
-      // r.company.id = r.company._id;
-      return r;
+  if (this.companyResponses) {
+    obj.companyResponses = this.companyResponses.map((r) => {
+      return r.transform();
     });
   }
   //Rename fields

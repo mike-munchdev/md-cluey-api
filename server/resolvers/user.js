@@ -394,12 +394,9 @@ module.exports = {
 
         await user.save();
 
-        const returnUser = await User.findById(userId).populate({
-          path: 'companyResponses',
-          populate: {
-            path: 'company',
-          },
-        });
+        const returnUser = await User.findById(userId).populate(
+          companyResponsesPopulate
+        );
 
         return createCompanyResponseResponse({
           ok: true,
