@@ -20,6 +20,7 @@ const { pick, omit } = require('lodash');
 const Company = require('../models/Company');
 const { sendMail } = require('../utils/mail');
 const { isUserNameUnique } = require('../utils/users');
+const { companyResponsesPopulate } = require('../utils/populate');
 
 module.exports = {
   Query: {
@@ -125,18 +126,15 @@ module.exports = {
         await connectDatabase();
 
         // TODO: check for accounts in db for this user/code
-        const user = await User.findById(userId).populate({
-          path: 'companyResponses',
-          populate: {
-            path: 'company',
-          },
-        });
+        const user = await User.findById(userId).populate(
+          companyResponsesPopulate
+        );
 
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
         return createCompanyResponsesResponse({
           ok: true,
-          companyResponses: user.companyResponses,
+          companyResponses: user.companyResponses.map((c) => c.transform()),
         });
       } catch (error) {
         return createCompanyResponsesResponse({

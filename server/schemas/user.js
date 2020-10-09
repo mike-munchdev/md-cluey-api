@@ -33,6 +33,7 @@ const typeDefs = gql`
   type ResponseToCompany {
     id: ID!
     companyId: String!
+    company: Company
     response: String!
   }
 
@@ -112,6 +113,7 @@ const typeDefs = gql`
   input UserCompanyResponseInput {
     userId: String!
     companyId: String!
+
     response: String!
   }
 

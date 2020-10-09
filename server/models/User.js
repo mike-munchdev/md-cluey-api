@@ -88,13 +88,14 @@ UserSchema.method('transform', function () {
 companyResponseSchema.method('transform', function () {
   let obj = this.toObject();
 
+  const company = transformCompany(obj.company);
+  obj.company = company;
+  // obj.company.id = obj.company._id;
   obj.companyId = obj.company._id;
-  obj.company.id = obj.company._id;
 
   //Rename fields
   obj.id = obj._id;
   delete obj._id;
-  delete obj.password;
 
   return obj;
 });
