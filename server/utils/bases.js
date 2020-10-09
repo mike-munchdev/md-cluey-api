@@ -48,9 +48,9 @@ const bases = [
     logoUrl: 'furniture.jpg',
   },
   { name: 'Electronics', isActive: false, logoUrl: 'electronics.jpg' },
-  { name: 'Grocery', isActive: false, logoUrl: 'grocery.jpg' },
+  { name: 'Grocery (COMPLETE)', isActive: false, logoUrl: 'grocery.jpg' },
   {
-    name: 'Dining & Entertainment',
+    name: 'Dining & Entertainment (COMPLETE)',
     isActive: false,
     logoUrl: 'dining-entertainment.jpg',
   },
@@ -327,6 +327,7 @@ module.exports.importCompanies = async () => {
 
                 // add brand url
                 if (record.fields['Brand URL']) {
+                  const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
                   existingCompany.brandUrl = record.fields['Brand URL'];
                 }
 

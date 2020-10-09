@@ -274,10 +274,10 @@ module.exports = {
           ...input,
           isActive,
           confirmToken:
-            !facebookId && !googleId
+            facebookId || googleId
               ? null
               : randomstring.generate({
-                  length: 12,
+                  length: 6,
                   charset: 'alphanumeric',
                 }),
         });
@@ -288,13 +288,10 @@ module.exports = {
             mailFrom: process.env.MAIL_FROM_ADDRESS,
             mailTo: user.email,
             subject: RESPONSES.EMAIL.SIGN_UP_EMAIL.subject,
-            html: RESPONSES.EMAIL.SIGN_UP_EMAIL.body
-              .replace(
-                '{REGISTER_URL}',
-                `${process.env.REGISTER_URL}/${user.confirmToken}`
-              )
-              .replace('{COMPANY_INFO}', `${process.env.COMPANY_INFO}`)
-              .replace('{SOCIAL_MEDIA_LINKS}', ''),
+            html: RESPONSES.EMAIL.SIGN_UP_EMAIL.body.replace(
+              '{CONFIRM_CODE}',
+              `${user.confirmToken}`
+            ),
           });
 
           await sendMail(mail);
