@@ -37,7 +37,6 @@ module.exports.transformCompany = (company) => {
 };
 
 module.exports.transformParentCompany = (parentCompany) => {
-  console.log('parentCompany', parentCompany);
   parentCompany.id = parentCompany._id;
   if (parentCompany.politicalContributions) {
     parentCompany.politicalContributions = parentCompany.politicalContributions.map(
