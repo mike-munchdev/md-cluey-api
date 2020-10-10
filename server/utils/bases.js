@@ -490,6 +490,7 @@ module.exports.importProductTypes = async () => {
 
                 if (!productType) {
                   productType = await ProductType.create({
+                    isActive: true,
                     name: record.fields['Product Type'],
                   });
                 }
@@ -559,7 +560,7 @@ module.exports.importLogos = async () => {
               console.log(`saving ${company.name} image ${brandNameUrl}.png`);
               await Company.findOneAndUpdate(
                 { _id: company._id },
-                { brandLogoUrl: `${brandNameUrl}.png` }
+                { brandLogoUrl: `${brandNameUrl}.png`, isActive: true }
               );
 
               console.log(`done with ${company.name}`);
