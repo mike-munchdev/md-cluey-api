@@ -50,14 +50,16 @@ module.exports = {
           user = await User.findOne({
             // facebookId: id,
             email: response.data.email,
-          });
+          }).populate(companyResponsesPopulate);
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else {
           console.log('by email');
-          user = await User.findOne({ email });
+          user = await User.findOne({ email }).populate(
+            companyResponsesPopulate
+          );
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
 
