@@ -55,7 +55,7 @@ const UserSchema = new Schema(
 
     isActive: { type: Boolean, default: false },
     confirmToken: { type: String },
-    friends: [String],
+    friends: [{ type: Schema.Types.ObjectId, ref: 'Friends' }],
     companyResponses: [companyResponseSchema],
     isProfilePublic: { type: Boolean, default: false },
   },

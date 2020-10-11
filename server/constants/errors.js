@@ -16,6 +16,9 @@ module.exports.ERRORS = {
     CONFIRM_TOKEN_NOT_FOUND: 'Confirm token not found.',
     USERNAME_ALREADY_TAKEN: 'The username you have selected is already taken.',
   },
+  FRIENDSHIP: {
+    EXISTING_FRIENDSHIP_REQUEST: 'Friendship/Request already exists.',
+  },
   AUTH: {
     DENIED: 'Access denied',
   },

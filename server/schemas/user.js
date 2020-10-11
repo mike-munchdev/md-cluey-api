@@ -117,6 +117,10 @@ const typeDefs = gql`
     response: String!
   }
 
+  input RequestFriendshipInput {
+    requestorId: String!
+    recipientId: String!
+  }
   type Query {
     getUserById(userId: String!): UserResponse!
     getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
@@ -137,6 +141,7 @@ const typeDefs = gql`
     updateCompanyResponseForUser(
       input: UserCompanyResponseInput!
     ): CompanyResponseResponse!
+    requestFriendship(input: RequestFriendshipInput!): UserResponse!
   }
 `;
 

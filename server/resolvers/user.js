@@ -21,6 +21,10 @@ const Company = require('../models/Company');
 const { sendMail } = require('../utils/mail');
 const { isUserNameUnique } = require('../utils/users');
 const { companyResponsesPopulate } = require('../utils/populate');
+const { connect } = require('mongoose');
+const Friends = require('../models/Friends');
+const { request } = require('express');
+const { friendshipEnum } = require('../utils/enum');
 
 module.exports = {
   Query: {
@@ -169,6 +173,7 @@ module.exports = {
         });
       }
     },
+
     createUser: async (parent, { input }, { isAdmin }) => {
       try {
         await connectDatabase();
@@ -188,6 +193,7 @@ module.exports = {
         });
       }
     },
+
     updateUser: async (parent, { input }, { isAdmin }) => {
       try {
         const { userId, username } = input;
@@ -223,6 +229,7 @@ module.exports = {
         });
       }
     },
+
     userSignup: async (parent, { input }, { isAdmin }) => {
       try {
         await connectDatabase();
@@ -334,6 +341,7 @@ module.exports = {
         });
       }
     },
+
     activateUserAccount: async (parent, { confirmToken }, { isAdmin }) => {
       try {
         await connectDatabase();
@@ -358,6 +366,7 @@ module.exports = {
         });
       }
     },
+
     updateCompanyResponseForUser: async (parent, { input }, { isAdmin }) => {
       try {
         await connectDatabase();
@@ -397,6 +406,48 @@ module.exports = {
         });
       } catch (error) {
         return createCompanyResponseResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+
+    requestFriendship: async (parent, { input }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        const { requestorId, recipientId } = input;
+
+        const existingFriendship = await Friends.findOne({
+          requester: requestorId,
+          recipient: recipientId,
+        });
+
+        if (existingFriendship)
+          throw new Error(ERRORS.FRIENDSHIP.EXISTING_FRIENDSHIP_REQUEST);
+
+        const friendship = new Friends();
+        friendship.requester = requestorId;
+        friendship.recipient = recipientId;
+        friendship.status = friendshipEnum[0];
+
+        friendship.save();
+
+        await User.updateMany(
+          {
+            $or: [{ _id: requestorId }, { _id: recipientId }],
+          },
+          { friends: friendship }
+        );
+
+        const user = await User.findById(requestorId).populate(
+          companyResponsesPopulate
+        );
+        return createUserResponse({
+          ok: true,
+          user: user.transform(),
+        });
+      } catch (error) {
+        return createUserResponse({
           ok: false,
           error: convertError(error),
         });
