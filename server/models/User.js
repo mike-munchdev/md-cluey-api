@@ -4,56 +4,63 @@ const { transformCompany } = require('../utils/transform');
 
 const Schema = mongoose.Schema;
 
-const companyResponseSchema = new Schema({
-  company: {
-    ref: 'Company',
-    type: Schema.Types.ObjectId,
-  },
-  response: {
-    type: String,
-    enum: ['will-buy', 'will-buy-later', 'will-not-buy', 'will-not-buy-later'],
-  },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-const UserSchema = new Schema({
-  email: {
-    type: String,
-    validate: {
-      validator: (v) => validatorF.isEmail(v),
-      message: 'Email validation failed',
+const companyResponseSchema = new Schema(
+  {
+    company: {
+      ref: 'Company',
+      type: Schema.Types.ObjectId,
     },
-    unique: true,
+    response: {
+      type: String,
+      enum: [
+        'will-buy',
+        'will-buy-later',
+        'will-not-buy',
+        'will-not-buy-later',
+      ],
+    },
   },
-  username: {
-    type: String,
-  },
-  password: { type: String, required: false },
-  firstName: { type: String, required: false },
-  middleName: { type: String, required: false },
-  lastName: { type: String, required: false },
-  dob: { type: Date },
-  city: { type: String },
-  state: { type: String },
-  gender: {
-    type: String,
-    enum: ['male', 'female', 'other'],
-  },
-  googleId: { type: String },
-  googleAuthToken: { type: String },
+  { timestamps: true }
+);
 
-  facebookId: { type: String },
-  facebookAuthToken: { type: String },
+const UserSchema = new Schema(
+  {
+    email: {
+      type: String,
+      validate: {
+        validator: (v) => validatorF.isEmail(v),
+        message: 'Email validation failed',
+      },
+      unique: true,
+    },
+    username: {
+      type: String,
+    },
+    password: { type: String, required: false },
+    firstName: { type: String, required: false },
+    middleName: { type: String, required: false },
+    lastName: { type: String, required: false },
+    dob: { type: Date },
+    city: { type: String },
+    state: { type: String },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other'],
+    },
+    googleId: { type: String },
+    googleAuthToken: { type: String },
 
-  isActive: { type: Boolean, default: false },
-  confirmToken: { type: String },
-  friends: [String],
-  companyResponses: [companyResponseSchema],
-  isProfilePublic: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+    facebookId: { type: String },
+    facebookAuthToken: { type: String },
+
+    isActive: { type: Boolean, default: false },
+    confirmToken: { type: String },
+    friends: [String],
+    companyResponses: [companyResponseSchema],
+    isProfilePublic: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
 
 // TODO: encrypt password in database;
 UserSchema.pre('save', async function () {

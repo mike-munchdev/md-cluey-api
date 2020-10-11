@@ -3,13 +3,14 @@ const Category = require('./Category');
 
 const Schema = mongoose.Schema;
 
-const ProductTypeSchema = new Schema({
-  airTableId: { type: String },
-  name: { type: String, required: true },
-  isActive: { type: Boolean },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+const ProductTypeSchema = new Schema(
+  {
+    airTableId: { type: String },
+    name: { type: String, required: true },
+    isActive: { type: Boolean },
+  },
+  { timestamps: true }
+);
 
 ProductTypeSchema.method('transform', function () {
   let obj = this.toObject();

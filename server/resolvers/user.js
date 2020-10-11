@@ -208,12 +208,9 @@ module.exports = {
           }
         );
 
-        const user = await User.findById(userId).populate({
-          path: 'companyResponses',
-          populate: {
-            path: 'company',
-          },
-        });
+        const user = await User.findById(userId).populate(
+          companyResponsesPopulate
+        );
 
         return createUserResponse({
           ok: true,
@@ -366,12 +363,9 @@ module.exports = {
         await connectDatabase();
         const { userId, companyId, response } = input;
 
-        let user = await User.findById(userId).populate({
-          path: 'companyResponses',
-          populate: {
-            path: 'company',
-          },
-        });
+        let user = await User.findById(userId).populate(
+          companyResponsesPopulate
+        );
 
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
         let company = await Company.findById(companyId);
@@ -386,7 +380,6 @@ module.exports = {
         let returnIndex = existingResponseIndex;
         if (existingResponseIndex >= 0) {
           user.companyResponses[existingResponseIndex].response = response;
-          user.companyResponses[existingResponseIndex].updatedAt = Date.now();
         } else {
           user.companyResponses.push({ company: company._id, response });
           returnIndex = user.companyResponses.length - 1;

@@ -75,15 +75,14 @@ const getOpenSecretsData = (data, year, companyName) => {
     .filter(
       (d) =>
         d['@attributes'].cycle === year &&
-        d['@attributes'].org_name.toLowerCase() === companyName.toLowerCase() &&
-        !d['@attributes'].subsidiary_id
+        d['@attributes'].org_name.toLowerCase() === companyName.toLowerCase()
     )
-    .map((d) => camelizeKeys(d['@attributes']));
+    .map((d) => d['@attributes']);
 };
 
 const getOrgIdFromParentCompany = (parentCompany) => {
   return parentCompany.politicalContributions.length > 0
-    ? parentCompany.politicalContributions[0].orgId
+    ? parentCompany.politicalContributions[0].org_id
     : null;
 };
 

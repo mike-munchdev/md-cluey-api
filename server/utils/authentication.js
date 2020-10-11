@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const connectDatabase = require('../models/connectDatabase');
+const { companyResponsesPopulate } = require('./populate');
 
 module.exports.validateToken = (token, secret) => {
   return new Promise((resolve, reject) => {
@@ -20,7 +21,9 @@ module.exports.findUserByToken = (decoded) => {
     try {
       if (decoded.info.id) {
         await connectDatabase();
-        const user = await User.findById(decoded.info.id);
+        const user = await User.findById(decoded.info.id).populate(
+          companyResponsesPopulate
+        );
 
         resolve(user);
       } else {

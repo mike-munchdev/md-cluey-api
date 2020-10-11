@@ -2,26 +2,27 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const ProductSchema = new Schema({
-  airTableId: { type: String },
-  name: { type: String, required: true },
-  productType: {
-    type: Schema.Types.ObjectId,
-    ref: 'ProductType',
-  },
-  tags: [
-    {
+const ProductSchema = new Schema(
+  {
+    airTableId: { type: String },
+    name: { type: String, required: true },
+    productType: {
       type: Schema.Types.ObjectId,
-      ref: 'Tag',
+      ref: 'ProductType',
     },
-  ],
-  brand: {
-    type: Schema.Types.ObjectId,
-    ref: 'Company',
+    tags: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Tag',
+      },
+    ],
+    brand: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+    },
   },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+  { timestamps: true }
+);
 
 ProductSchema.method('transform', function () {
   let obj = this.toObject();
