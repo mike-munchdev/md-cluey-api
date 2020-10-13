@@ -22,8 +22,8 @@ module.exports = {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
 
-        // await importPoliticalContributionData();
-        // await importCategories();
+        await importPoliticalContributionData();
+        await importCategories();
         await importParentCompanies();
         await importProductTypes();
         await importCompanies();
