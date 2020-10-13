@@ -96,6 +96,7 @@ const typeDefs = gql`
   input UpdateUserPasswordInput {
     userId: String!
     password: String!
+    isReset: Boolean
   }
 
   input UserSignupInput {
@@ -139,6 +140,7 @@ const typeDefs = gql`
     createUser(input: CreateUserInput!): UserResponse!
     updateUser(input: UpdateUserInput!): UserResponse!
     updateUserPassword(input: UpdateUserPasswordInput!): GeneralResponse!
+    resetPassword(email: String!): GeneralResponse!
     userSignup(input: UserSignupInput!): GeneralResponse!
     addPushToken(input: AddPushToken!): UserResponse!
     activateUserAccount(confirmToken: String!): GeneralResponse!

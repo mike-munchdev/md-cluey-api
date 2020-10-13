@@ -207,6 +207,52 @@ module.exports = {
         });
       }
     },
+    resetPassword: async (parent, { email }, { user, isAdmin }) => {
+      try {
+        await connectDatabase();
+        // TODO: check for accounts in db for this user/code
+
+        let dbUser = await User.findOne({ email });
+
+        if (!dbUser)
+          throw new Error('No user found with the provided information.');
+
+        if (dbUser.facebookId || dbUser.googleId)
+          throw new Error(
+            'User is connected via social platform and cannot reset a password'
+          );
+        const password = randomstring.generate({
+          length: 8,
+          charset: 'alphanumeric',
+        });
+
+        dbUser.mustResetPassword = true;
+        dbUser.password = password;
+
+        await dbUser.save();
+
+        const mail = await Mail.create({
+          mailFrom: process.env.MAIL_FROM_ADDRESS,
+          mailTo: dbUser.email,
+          subject: RESPONSES.EMAIL.RESET_PASSWORD_EMAIL.subject,
+          html: RESPONSES.EMAIL.RESET_PASSWORD_EMAIL.body.replace(
+            '{TEMPORARY_PASSWORD}',
+            `${password}`
+          ),
+        });
+        await sendMail(mail);
+
+        return createGeneralResponse({
+          ok: true,
+          message: RESPONSES.USER.PASSWORD_CHANGED,
+        });
+      } catch (error) {
+        return createGeneralResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
 
     createUser: async (parent, { input }, { isAdmin }) => {
       try {
@@ -317,7 +363,6 @@ module.exports = {
         });
 
         if (!facebookId && !googleId) {
-          // TODO: add mail to queue
           const mail = await Mail.create({
             mailFrom: process.env.MAIL_FROM_ADDRESS,
             mailTo: user.email,

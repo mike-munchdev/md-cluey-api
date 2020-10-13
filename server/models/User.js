@@ -54,6 +54,7 @@ const UserSchema = new Schema(
     friends: [{ type: Schema.Types.ObjectId, ref: 'Friends' }],
     companyResponses: [companyResponseSchema],
     isProfilePublic: { type: Boolean, default: false },
+    mustResetPassword: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

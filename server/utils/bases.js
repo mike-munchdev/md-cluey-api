@@ -71,17 +71,8 @@ const bases = [
   },
 ];
 
-const getOpenSecretsData = (data) => {
-  console.log('data', data);
-  return (
-    data
-      // .filter(
-      //   (d) =>
-      //     d['@attributes'].cycle === year &&
-      //     d['@attributes'].org_name.toLowerCase() === companyName.toLowerCase()
-      // )
-      .map((d) => d['@attributes'])
-  );
+const convertOpenSecretsData = (data) => {
+  return data.map((d) => d['@attributes']);
 };
 
 const getOrgIdFromParentCompany = (parentCompany) => {
@@ -216,63 +207,39 @@ module.exports.importProducts = async () => {
   });
 };
 
+const populatePoliticalContributionsData = (cycle) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const response = await fetch(
+        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=${cycle}&output=json`
+      );
+      const json = await response.json();
+      const data = convertOpenSecretsData(json.response.org);
+
+      await asyncForEach(data, async (d) => {
+        await PoliticalContribution.findOneAndUpdate(
+          { org_id: d.org_id, cycle: d.cycle },
+          { ...d },
+          {
+            upsert: true,
+          }
+        );
+      });
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
 // #1
 module.exports.importPoliticalContributionData = async () => {
   return new Promise(async (resolve, reject) => {
     try {
       await connectDatabase();
 
-      const response2020 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2020&output=json`
-      );
-      const json2020 = await response2020.json();
-      const data2020 = getOpenSecretsData(json2020.response.org);
-
-      await asyncForEach(data2020, async (d) => {
-        console.log('d', d);
-        await PoliticalContribution.findOneAndUpdate(
-          { org_id: d.org_id, cycle: d.cycle },
-          { ...d },
-          {
-            upsert: true,
-          }
-        );
-      });
-
-      const response2018 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2018&output=json`
-      );
-      const json2018 = await response2018.json();
-      const data2018 = getOpenSecretsData(json2018.response.org);
-
-      await asyncForEach(data2018, async (d) => {
-        console.log('d', d);
-        await PoliticalContribution.findOneAndUpdate(
-          { org_id: d.org_id, cycle: d.cycle },
-          { ...d },
-          {
-            upsert: true,
-          }
-        );
-      });
-
-      const response2016 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2016&output=json`
-      );
-
-      const json2016 = await response2016.json();
-      const data2016 = getOpenSecretsData(json2016.response.org);
-
-      await asyncForEach(data2016, async (d) => {
-        console.log('d', d);
-        await PoliticalContribution.findOneAndUpdate(
-          { org_id: d.org_id, cycle: d.cycle },
-          { ...d },
-          {
-            upsert: true,
-          }
-        );
-      });
+      populatePoliticalContributionsData(2020);
+      populatePoliticalContributionsData(2018);
+      populatePoliticalContributionsData(2016);
 
       resolve();
     } catch (error) {
