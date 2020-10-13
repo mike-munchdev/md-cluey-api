@@ -4,10 +4,10 @@ const { friendshipEnum } = require('../utils/enum');
 
 const Schema = mongoose.Schema;
 
-const friendsSchema = new Schema(
+const FriendsSchema = new Schema(
   {
-    requester: { type: Schema.Types.ObjectId, ref: 'Users' },
-    recipient: { type: Schema.Types.ObjectId, ref: 'Users' },
+    requester: { type: Schema.Types.ObjectId, ref: 'User' },
+    recipient: { type: Schema.Types.ObjectId, ref: 'User' },
     status: {
       type: String,
       enum: friendshipEnum,
@@ -15,4 +15,20 @@ const friendsSchema = new Schema(
   },
   { timestamps: true }
 );
-module.exports = mongoose.model('Friends', friendsSchema);
+
+FriendsSchema.method('transform', function () {
+  let obj = this.toObject();
+
+  if (obj.recipient) {
+    obj.recipient.id = obj.recipient._id;
+  }
+  if (obj.requester) {
+    obj.requester.id = obj.requester._id;
+  }
+
+  obj.id = obj._id;
+
+  return obj;
+});
+
+module.exports = mongoose.model('Friends', FriendsSchema);

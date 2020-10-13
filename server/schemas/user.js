@@ -23,13 +23,12 @@ const typeDefs = gql`
     createdAt: Date!
   }
 
-  type Friend {
+  type UserLite {
     id: ID!
     username: String
-    firstName: String!
-    lastName: String!
+    firstName: String
+    lastName: String
   }
-
   type ResponseToCompany {
     id: ID!
     companyId: String!
@@ -43,10 +42,15 @@ const typeDefs = gql`
     error: Error
   }
 
-  type FriendsResponse {
+  type UsersResponse {
     ok: Boolean!
-    friends: [Friend!]
-    searchText: String
+    users: [Friend!]
+    error: Error
+  }
+
+  type UserLiteResponse {
+    ok: Boolean
+    users: [UserLite!]
     error: Error
   }
 
@@ -113,7 +117,6 @@ const typeDefs = gql`
   input UserCompanyResponseInput {
     userId: String!
     companyId: String!
-
     response: String!
   }
 
@@ -121,14 +124,15 @@ const typeDefs = gql`
     requestorId: String!
     recipientId: String!
   }
+
   type Query {
     getUserById(userId: String!): UserResponse!
     getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
-    getUserFriends(userId: String!): FriendsResponse!
-    getPublicAndActiveUsersByName(
+    getUserFriends(userId: String!): FriendshipsResponse!
+    getPublicAndActiveNonFriendsByName(
       name: String!
       exact: Boolean
-    ): FriendsResponse!
+    ): UserLiteResponse!
   }
 
   type Mutation {
@@ -142,6 +146,9 @@ const typeDefs = gql`
       input: UserCompanyResponseInput!
     ): CompanyResponseResponse!
     requestFriendship(input: RequestFriendshipInput!): UserResponse!
+    deleteFriendshipById(friendshipId: String!): GeneralResponse!
+    acceptFriendship(friendshipId: String!): FriendshipResponse!
+    rejectFriendship(friendshipId: String!): FriendshipResponse!
   }
 `;
 

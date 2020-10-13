@@ -20,10 +20,10 @@ module.exports.transformCompany = (company) => {
   }
 
   if (company.parentCompanies) {
-    const parentCompanies = company.parentCompanies.map((p) => {
-      return this.transformParentCompany(p);
+    obj.parentCompanies = company.parentCompanies.map((p) => {
+      p.id = p._id;
+      return p;
     });
-    obj.parentCompanies = parentCompanies;
   }
 
   if (company.tags) {
@@ -33,19 +33,12 @@ module.exports.transformCompany = (company) => {
     });
   }
 
-  return obj;
-};
-
-module.exports.transformParentCompany = (parentCompany) => {
-  parentCompany.id = parentCompany._id;
-  if (parentCompany.politicalContributions) {
-    parentCompany.politicalContributions = parentCompany.politicalContributions.map(
-      (p) => {
-        p.id = p._id;
-        return p;
-      }
-    );
+  if (company.politicalContributions) {
+    obj.politicalContributions = company.politicalContributions.map((pc) => {
+      pc.id = pc._id;
+      return pc;
+    });
   }
 
-  return parentCompany;
+  return obj;
 };

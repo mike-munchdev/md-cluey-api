@@ -5,7 +5,9 @@ module.exports.RESPONSES = {
     PASSWORD_CHANGED: 'Password changed.',
     ACCOUNT_ACTIVATED: 'Your account is now active.',
   },
-
+  FRIENDSHIP: {
+    REQUEST_DELETED: 'Friendship requested deleted',
+  },
   EMAIL: {
     SIGN_UP_EMAIL: {
       subject: 'Confirm Your Account',

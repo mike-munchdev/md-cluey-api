@@ -56,7 +56,6 @@ module.exports = {
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
         } else {
-          console.log('by email');
           user = await User.findOne({ email }).populate(
             companyResponsesPopulate
           );

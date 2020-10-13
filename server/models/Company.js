@@ -27,13 +27,20 @@ const CompanySchema = new Schema(
         ref: 'ParentCompany',
       },
     ],
+    politicalContributions: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'PoliticalContribution',
+      },
+    ],
+
     isActive: { type: Boolean },
   },
   { timestamps: true }
 );
 
 CompanySchema.method('transform', function () {
-  let obj = this.toObject();
-  return transformCompany(obj);
+  // let obj = this.toObject();
+  return transformCompany(this);
 });
 module.exports = mongoose.model('Company', CompanySchema);

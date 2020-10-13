@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { default: validatorF } = require('validator');
+const { genderEnum, companyResponseEnum } = require('../utils/enum');
 const { transformCompany } = require('../utils/transform');
 
 const Schema = mongoose.Schema;
@@ -12,12 +13,7 @@ const companyResponseSchema = new Schema(
     },
     response: {
       type: String,
-      enum: [
-        'will-buy',
-        'will-buy-later',
-        'will-not-buy',
-        'will-not-buy-later',
-      ],
+      enum: companyResponseEnum,
     },
   },
   { timestamps: true }
@@ -45,7 +41,7 @@ const UserSchema = new Schema(
     state: { type: String },
     gender: {
       type: String,
-      enum: ['male', 'female', 'other'],
+      enum: genderEnum,
     },
     googleId: { type: String },
     googleAuthToken: { type: String },

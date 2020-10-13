@@ -16,6 +16,7 @@ const User = require('../models/User');
 const user = require('../resolvers/user');
 const path = require('path');
 const ParentCompany = require('../models/ParentCompany');
+const PoliticalContribution = require('../models/PoliticalContribution');
 
 const Airtable = require('airtable');
 const { camelizeKeys } = require('./case');
@@ -70,14 +71,17 @@ const bases = [
   },
 ];
 
-const getOpenSecretsData = (data, year, companyName) => {
-  return data
-    .filter(
-      (d) =>
-        d['@attributes'].cycle === year &&
-        d['@attributes'].org_name.toLowerCase() === companyName.toLowerCase()
-    )
-    .map((d) => d['@attributes']);
+const getOpenSecretsData = (data) => {
+  console.log('data', data);
+  return (
+    data
+      // .filter(
+      //   (d) =>
+      //     d['@attributes'].cycle === year &&
+      //     d['@attributes'].org_name.toLowerCase() === companyName.toLowerCase()
+      // )
+      .map((d) => d['@attributes'])
+  );
 };
 
 const getOrgIdFromParentCompany = (parentCompany) => {
@@ -212,6 +216,71 @@ module.exports.importProducts = async () => {
   });
 };
 
+// #1
+module.exports.importPoliticalContributionData = async () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await connectDatabase();
+
+      const response2020 = await fetch(
+        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2020&output=json`
+      );
+      const json2020 = await response2020.json();
+      const data2020 = getOpenSecretsData(json2020.response.org);
+
+      await asyncForEach(data2020, async (d) => {
+        console.log('d', d);
+        await PoliticalContribution.findOneAndUpdate(
+          { org_id: d.org_id, cycle: d.cycle },
+          { ...d },
+          {
+            upsert: true,
+          }
+        );
+      });
+
+      const response2018 = await fetch(
+        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2018&output=json`
+      );
+      const json2018 = await response2018.json();
+      const data2018 = getOpenSecretsData(json2018.response.org);
+
+      await asyncForEach(data2018, async (d) => {
+        console.log('d', d);
+        await PoliticalContribution.findOneAndUpdate(
+          { org_id: d.org_id, cycle: d.cycle },
+          { ...d },
+          {
+            upsert: true,
+          }
+        );
+      });
+
+      const response2016 = await fetch(
+        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2016&output=json`
+      );
+
+      const json2016 = await response2016.json();
+      const data2016 = getOpenSecretsData(json2016.response.org);
+
+      await asyncForEach(data2016, async (d) => {
+        console.log('d', d);
+        await PoliticalContribution.findOneAndUpdate(
+          { org_id: d.org_id, cycle: d.cycle },
+          { ...d },
+          {
+            upsert: true,
+          }
+        );
+      });
+
+      resolve();
+    } catch (error) {
+      console.log(error);
+      reject(error);
+    }
+  });
+};
 // #2
 module.exports.importParentCompanies = async () => {
   return new Promise(async (resolve, reject) => {
@@ -222,24 +291,6 @@ module.exports.importParentCompanies = async () => {
       //   'process.env.OPEN_SECRETS_API_KEY',
       //   process.env.OPEN_SECRETS_API_KEY
       // );
-      const response2020 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2020&output=json`
-      );
-
-      const json2020 = await response2020.json();
-      const data2020 = json2020.response.org;
-
-      const response2018 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2018&output=json`
-      );
-      const json2018 = await response2018.json();
-      const data2018 = json2018.response.org;
-
-      const response2016 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2016&output=json`
-      );
-      const json2016 = await response2016.json();
-      const data2016 = json2016.response.org;
 
       await asyncForEach(
         bases.filter((b) => b.isActive),
@@ -259,45 +310,14 @@ module.exports.importParentCompanies = async () => {
                 await asyncForEach(
                   record.fields['Parent Company(ies)'],
                   async (parentCompany, index, array) => {
-                    console.log('parentCompany', parentCompany);
-                    const pi2016 = getOpenSecretsData(
-                      data2016,
-                      '2016',
-                      parentCompany
-                    );
-
-                    const pi2018 = getOpenSecretsData(
-                      data2018,
-                      '2018',
-                      parentCompany
-                    );
-
-                    const pi2020 = getOpenSecretsData(
-                      data2020,
-                      '2020',
-                      parentCompany
-                    );
-
                     // find one and update
                     const parentCompanyDb = await ParentCompany.findOneAndUpdate(
                       { name: parentCompany },
                       {
                         name: parentCompany,
-                        politicalContributions: [
-                          ...pi2016,
-                          ...pi2018,
-                          ...pi2020,
-                        ],
                       },
                       { upsert: true, new: true }
                     );
-                    if (parentCompanyDb) {
-                      const orgId = getOrgIdFromParentCompany(parentCompanyDb);
-                      if (orgId) {
-                        parentCompanyDb.orgId = orgId;
-                        await parentCompanyDb.save();
-                      }
-                    }
                   }
                 );
               }
@@ -339,6 +359,7 @@ module.exports.importCompanies = async () => {
             const records = await base(b.name)
               .select({ view: 'Grid view' })
               .all();
+
             await asyncForEach(records, async (record, index, array) => {
               // create brand
               if (record.fields['Search by name (primary query)']) {
@@ -373,6 +394,19 @@ module.exports.importCompanies = async () => {
                     });
                     existingCompany.parentCompanies = parentCompanies;
                   }
+
+                  // add political contributions
+                  if (
+                    record.fields['OrgID(s)'] &&
+                    record.fields['OrgID(s)'].length > 0
+                  ) {
+                    const politicalContributions = await PoliticalContribution.find(
+                      {
+                        org_id: { $in: record.fields['OrgID(s)'] },
+                      }
+                    );
+                    existingCompany.politicalContributions = politicalContributions;
+                  }
                   // add category
                   const existingCategory = existingCompany.categories.find(
                     (c) => {
@@ -387,6 +421,7 @@ module.exports.importCompanies = async () => {
                     existingCompany.categories.push(currentCategory.id);
                   }
 
+                  existingCompany.isActive = true;
                   await existingCompany.save();
                 }
 

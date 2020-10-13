@@ -2,10 +2,12 @@ const { withFilter } = require('apollo-server-express');
 const { ObjectId } = require('mongoose').Types;
 const randomstring = require('randomstring');
 const { ERRORS } = require('../constants/errors');
+const { MESSAGES } = require('../constants/messages');
 const { convertError } = require('../utils/errors');
 
 const User = require('../models/User');
 const Mail = require('../models/Mail');
+const SystemNotification = require('../models/SystemNotification');
 
 const connectDatabase = require('../models/connectDatabase');
 const {
@@ -13,18 +15,27 @@ const {
   createGeneralResponse,
   createCompanyResponseResponse,
   createCompanyResponsesResponse,
-  createFriendsResponse,
+  createFriendshipsResponse,
+  createUsersResponse,
+  createFriendshipResponse,
+
+  createUserLiteResponse,
 } = require('../utils/responses');
 const { RESPONSES } = require('../constants/responses');
 const { pick, omit } = require('lodash');
 const Company = require('../models/Company');
 const { sendMail } = require('../utils/mail');
 const { isUserNameUnique } = require('../utils/users');
-const { companyResponsesPopulate } = require('../utils/populate');
+const {
+  companyResponsesPopulate,
+  friendshipPopulate,
+} = require('../utils/populate');
 const { connect } = require('mongoose');
 const Friends = require('../models/Friends');
 const { request } = require('express');
-const { friendshipEnum } = require('../utils/enum');
+const { friendshipEnum, notificationTypeEnum } = require('../utils/enum');
+const { updateFriendshipRequest } = require('../utils/friend');
+const { addNotification } = require('../utils/notification');
 
 module.exports = {
   Query: {
@@ -35,71 +46,94 @@ module.exports = {
 
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
-        const users = await User.find(
-          { _id: { $in: user.friends } },
-          'username firstName lastName'
-        );
+        console.log('user', user);
 
-        return createFriendsResponse({
+        const friendships = await Friends.find({
+          _id: { $in: user.friends },
+          status: friendshipEnum[2],
+        }).populate(friendshipPopulate);
+
+        console.log('friendships', friendships);
+
+        return createFriendshipsResponse({
           ok: true,
-          friends: users.map((u) => u.transform()),
+          friendships: friendships.map((f) => f.transform()),
         });
       } catch (error) {
-        return createFriendsResponse({
+        return createFriendshipsResponse({
           ok: true,
           error: convertError(error),
         });
       }
     },
-    getPublicAndActiveUsersByName: async (
+    getPublicAndActiveNonFriendsByName: async (
       parent,
       { exact, name },
-      { isAdmin }
+      { isAdmin, user }
     ) => {
       try {
         await connectDatabase();
         let users;
-        if (exact) {
-          users = await User.find(
-            {
-              isActive: true,
-              isProfilePublic: true,
-              $or: [
-                { username: name },
-                { firstName: name },
-                { lastName: name },
-              ],
+
+        const me = await User.findById(user.id, 'friends');
+
+        const friendships = await Friends.find({
+          _id: { $in: me.friends },
+          status: friendshipEnum[2],
+        }).populate(friendshipPopulate);
+
+        const friendIds = friendships.map((f) => {
+          const friend = f.requester.id === user.id ? f.recipient : f.requester;
+          return friend.id;
+        });
+        const orQuery = exact
+          ? [
+              { username: name },
+              { firstName: name },
+              { lastName: name },
+              { nameFilter: name },
+            ]
+          : [
+              { username: { $regex: name, $options: 'i' } },
+              { firstName: { $regex: name, $options: 'i' } },
+              { lastName: { $regex: name, $options: 'i' } },
+              { nameFilter: { $regex: name, $options: 'i' } },
+            ];
+
+        users = await User.aggregate([
+          {
+            $addFields: {
+              nameFilter: {
+                $concat: ['$firstName', ' ', '$lastName'],
+              },
             },
-            'username firstName lastName'
-          ).limit(
+          },
+          {
+            $match: {
+              $or: orQuery,
+            },
+          },
+        ])
+          .project({
+            username: 1,
+            firstName: 1,
+            lastName: 1,
+            _id: 1,
+          })
+          .limit(
             process.env.FRIEND_SEARCH_LIMIT
               ? parseInt(process.env.FRIEND_SEARCH_LIMIT)
               : 50
           );
-        } else {
-          users = await User.find(
-            {
-              isActive: true,
-              isProfilePublic: true,
-              $or: [
-                { username: { $regex: name, $options: 'i' } },
-                { firstName: { $regex: name, $options: 'i' } },
-                { lastName: { $regex: name, $options: 'i' } },
-              ],
-            },
-            'username firstName lastName'
-          ).limit(
-            process.env.FRIEND_SEARCH_LIMIT
-              ? parseInt(process.env.FRIEND_SEARCH_LIMIT)
-              : 50
-          );
-        }
-        return createFriendsResponse({
+
+        console.log('users', users);
+        return createUserLiteResponse({
           ok: true,
-          friends: users.map((u) => u.transform()),
+          users: users.map((u) => u.transform()),
+          searchText: name,
         });
       } catch (error) {
-        return createFriendsResponse({
+        return createUserLiteResponse({
           ok: true,
           error: convertError(error),
         });
@@ -412,14 +446,112 @@ module.exports = {
       }
     },
 
+    deleteFriendshipById: async (parent, { friendshipId }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        console.log('friendshipId', friendshipId);
+        // delete friendship record
+        await Friends.findByIdAndDelete(friendshipId);
+
+        // remove all instances of this from the users
+        await User.updateMany({}, { $pull: { friends: friendshipId } });
+        // remove all instances of this from the notifications
+        await SystemNotification.findOneAndDelete({}, { linkId: friendshipId });
+
+        return createGeneralResponse({
+          ok: true,
+          message: RESPONSES.FRIENDSHIP.REQUEST_DELETED,
+        });
+      } catch (error) {
+        return createGeneralResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+
+    acceptFriendship: async (parent, { friendshipId }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+
+        let existingFriendship = await Friends.findById(friendshipId).populate(
+          friendshipPopulate
+        );
+
+        if (!existingFriendship)
+          throw new Error(ERRORS.FRIENDSHIP.NO_FRIENDSHIP_REQUEST_EXISTS);
+
+        console.log('existingFriendship', existingFriendship);
+        existingFriendship = await updateFriendshipRequest(
+          existingFriendship,
+          friendshipEnum[2]
+        );
+
+        // add notification
+        await addNotification(
+          existingFriendship.requester,
+          `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
+          notificationTypeEnum[0],
+          existingFriendship._id
+        );
+
+        return createFriendshipResponse({
+          ok: true,
+          friendship: existingFriendship.transform(),
+        });
+      } catch (error) {
+        return createFriendshipResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    rejectFriendship: async (parent, { friendshipId }, { isAdmin }) => {
+      try {
+        await connectDatabase();
+
+        let existingFriendship = await Friends.findById(friendshipId).populate(
+          friendshipPopulate
+        );
+
+        if (!existingFriendship)
+          throw new Error(ERRORS.FRIENDSHIP.NO_FRIENDSHIP_REQUEST_EXISTS);
+
+        console.log('existingFriendship', existingFriendship);
+        existingFriendship = await updateFriendshipRequest(
+          existingFriendship,
+          friendshipEnum[3]
+        );
+
+        // add notification
+        await addNotification(
+          existingFriendship.requester,
+          `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
+          notificationTypeEnum[0],
+          existingFriendship._id
+        );
+
+        return createFriendshipResponse({
+          ok: true,
+          friendship: existingFriendship.transform(),
+        });
+      } catch (error) {
+        return createFriendshipResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
     requestFriendship: async (parent, { input }, { isAdmin }) => {
       try {
         await connectDatabase();
         const { requestorId, recipientId } = input;
 
         const existingFriendship = await Friends.findOne({
-          requester: requestorId,
-          recipient: recipientId,
+          $or: [
+            { requester: requestorId, recipient: recipientId },
+            { requester: recipientId, recipient: requestorId },
+          ],
         });
 
         if (existingFriendship)
@@ -430,18 +562,27 @@ module.exports = {
         friendship.recipient = recipientId;
         friendship.status = friendshipEnum[0];
 
-        friendship.save();
+        await friendship.save();
 
         await User.updateMany(
           {
             $or: [{ _id: requestorId }, { _id: recipientId }],
           },
-          { friends: friendship }
+          { $push: { friends: friendship } }
         );
 
         const user = await User.findById(requestorId).populate(
           companyResponsesPopulate
         );
+        // add notification
+        const notification = new SystemNotification();
+
+        notification.user = recipientId;
+        notification.message = `${user.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_PENDING}`;
+        notification.notificationType = notificationTypeEnum[0];
+        notification.linkId = friendship._id;
+        await notification.save();
+
         return createUserResponse({
           ok: true,
           user: user.transform(),

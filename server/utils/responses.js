@@ -9,16 +9,57 @@ module.exports.createUserResponse = ({ ok, user = null, error = null }) => {
   };
 };
 
-module.exports.createFriendsResponse = ({
+module.exports.createUsersResponse = ({
   ok,
-  friends = null,
+  users = null,
   error = null,
   searchText = null,
 }) => {
   if (error) Bugsnag.notify(error);
   return {
     ok,
-    friends,
+    users,
+    error,
+  };
+};
+
+module.exports.createFriendshipsResponse = ({
+  ok,
+  friendships = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    friendships,
+    error,
+  };
+};
+module.exports.createUserLiteResponse = ({
+  ok,
+  users = null,
+  error = null,
+  searchText = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    users,
+    error,
+    searchText,
+  };
+};
+
+module.exports.createFriendshipResponse = ({
+  ok,
+  friendship = null,
+  error = null,
+  searchText = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    friendship,
     error,
     searchText,
   };

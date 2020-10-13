@@ -12,6 +12,7 @@ const {
   importCompanies,
   importCategories,
   importLogos,
+  importPoliticalContributionData,
 } = require('../utils/bases');
 
 module.exports = {
@@ -21,7 +22,8 @@ module.exports = {
         await connectDatabase();
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
 
-        await importCategories();
+        // await importPoliticalContributionData();
+        // await importCategories();
         await importParentCompanies();
         await importProductTypes();
         await importCompanies();
@@ -135,6 +137,24 @@ module.exports = {
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
 
         await importCompanies();
+
+        return createGeneralResponse({
+          ok: true,
+          message: 'Completed',
+        });
+      } catch (error) {
+        return createGeneralResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    importPoliticalContributionData: async (parent, input, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
+
+        await importPoliticalContributionData();
 
         return createGeneralResponse({
           ok: true,

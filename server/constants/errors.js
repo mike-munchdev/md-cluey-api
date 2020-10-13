@@ -17,7 +17,10 @@ module.exports.ERRORS = {
     USERNAME_ALREADY_TAKEN: 'The username you have selected is already taken.',
   },
   FRIENDSHIP: {
-    EXISTING_FRIENDSHIP_REQUEST: 'Friendship/Request already exists.',
+    EXISTING_FRIENDSHIP_REQUEST:
+      'Friendship or friendship request already exists.',
+    NO_FRIENDSHIP_REQUEST_EXISTS:
+      'Friendship or friendship request does not exist.',
   },
   AUTH: {
     DENIED: 'Access denied',
