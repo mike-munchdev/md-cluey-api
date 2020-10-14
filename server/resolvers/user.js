@@ -36,6 +36,7 @@ const { request } = require('express');
 const { friendshipEnum, notificationTypeEnum } = require('../utils/enum');
 const { updateFriendshipRequest } = require('../utils/friend');
 const { addNotification } = require('../utils/notification');
+const { db } = require('../models/Company');
 
 module.exports = {
   Query: {
@@ -46,14 +47,10 @@ module.exports = {
 
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
-        console.log('user', user);
-
         const friendships = await Friends.find({
           _id: { $in: user.friends },
           status: friendshipEnum[2],
         }).populate(friendshipPopulate);
-
-        console.log('friendships', friendships);
 
         return createFriendshipsResponse({
           ok: true,
@@ -126,7 +123,6 @@ module.exports = {
               : 50
           );
 
-        console.log('users', users);
         return createUserLiteResponse({
           ok: true,
           users: users.map((u) => u.transform()),
@@ -194,14 +190,19 @@ module.exports = {
           throw new Error('No user found with the provided information.');
 
         user.password = input.password;
-        user.save();
+        user.mustResetPassword = false;
+        await user.save();
 
-        return createGeneralResponse({
+        const dbUser = await User.findById(user._id).populate(
+          companyResponsesPopulate
+        );
+
+        return createUserResponse({
           ok: true,
-          message: RESPONSES.USER.PASSWORD_CHANGED,
+          user: dbUser.transform(),
         });
       } catch (error) {
-        return createGeneralResponse({
+        return createUserResponse({
           ok: false,
           error: convertError(error),
         });
@@ -244,7 +245,7 @@ module.exports = {
 
         return createGeneralResponse({
           ok: true,
-          message: RESPONSES.USER.PASSWORD_CHANGED,
+          message: RESPONSES.USER.RESET_PASSWORD,
         });
       } catch (error) {
         return createGeneralResponse({
@@ -494,7 +495,7 @@ module.exports = {
     deleteFriendshipById: async (parent, { friendshipId }, { isAdmin }) => {
       try {
         await connectDatabase();
-        console.log('friendshipId', friendshipId);
+
         // delete friendship record
         await Friends.findByIdAndDelete(friendshipId);
 
@@ -526,7 +527,6 @@ module.exports = {
         if (!existingFriendship)
           throw new Error(ERRORS.FRIENDSHIP.NO_FRIENDSHIP_REQUEST_EXISTS);
 
-        console.log('existingFriendship', existingFriendship);
         existingFriendship = await updateFriendshipRequest(
           existingFriendship,
           friendshipEnum[2]
@@ -562,7 +562,6 @@ module.exports = {
         if (!existingFriendship)
           throw new Error(ERRORS.FRIENDSHIP.NO_FRIENDSHIP_REQUEST_EXISTS);
 
-        console.log('existingFriendship', existingFriendship);
         existingFriendship = await updateFriendshipRequest(
           existingFriendship,
           friendshipEnum[3]

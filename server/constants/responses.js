@@ -4,6 +4,8 @@ module.exports.RESPONSES = {
       'Success!  You should receive an email within the next few minutes to confirm your account.',
     PASSWORD_CHANGED: 'Password changed.',
     ACCOUNT_ACTIVATED: 'Your account is now active.',
+    RESET_PASSWORD:
+      'Success!  You should receive an email within the next few minutes to reset your password.',
   },
   FRIENDSHIP: {
     REQUEST_DELETED: 'Friendship requested deleted',
@@ -133,7 +135,7 @@ module.exports.RESPONSES = {
                                       <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
                                         <tbody>
                                           <tr>
-                                            <td style="height: 40px; font-family: sans-serif; font-size: 14px; vertical-align: middle; background-color: #3498db; border-radius: 0px; text-align: center;">Temporary Password: {TEMPORARY_PASSWORD}</td>
+                                            <td style="height: 40px; font-family: sans-serif; font-size: 14px; vertical-align: middle; background-color: #005046; border-radius: 0px; text-align: center; color: white; padding: 10px">Temporary Password: {TEMPORARY_PASSWORD}</td>
                                           </tr>
                                         </tbody>
                                       </table>

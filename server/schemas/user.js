@@ -21,6 +21,7 @@ const typeDefs = gql`
     isProfilePublic: Boolean
     isActive: Boolean
     createdAt: Date!
+    mustResetPassword: Boolean
   }
 
   type UserLite {
@@ -139,7 +140,7 @@ const typeDefs = gql`
   type Mutation {
     createUser(input: CreateUserInput!): UserResponse!
     updateUser(input: UpdateUserInput!): UserResponse!
-    updateUserPassword(input: UpdateUserPasswordInput!): GeneralResponse!
+    updateUserPassword(input: UpdateUserPasswordInput!): UserResponse!
     resetPassword(email: String!): GeneralResponse!
     userSignup(input: UserSignupInput!): GeneralResponse!
     addPushToken(input: AddPushToken!): UserResponse!
