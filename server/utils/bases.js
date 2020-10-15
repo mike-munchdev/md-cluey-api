@@ -522,6 +522,99 @@ module.exports.importProductTypes = async () => {
   });
 };
 
+module.exports.getMissingLogos = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const missingLogos = [];
+      const companies = await Company.find({}).sort({ brandLogoUrl: 1 });
+      await asyncForEach(companies, async (company, index, array) => {
+        const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+        console.log(
+          `starting image lookup for ${company.name} with for ${brandNameUrl}`
+        );
+
+        const imagePath = path.join(
+          __dirname,
+          '../../',
+          'public/logos',
+          `${brandNameUrl}.png`
+        );
+        // check for existing file
+        const fileFound = fs.existsSync(imagePath);
+        if (!fileFound) {
+          missingLogos.push(`${brandNameUrl}.png`);
+        }
+      });
+      const allFiles = missingLogos.join('\r\n');
+      console.log(allFiles);
+      const data = new Uint8Array(Buffer.from(allFiles));
+
+      fs.writeFile(
+        path.join(__dirname, '../../', 'public/logos', `missingLogos.txt`),
+        data,
+        (err) => {
+          if (err) throw err;
+          console.log('The file has been saved!');
+        }
+      );
+
+      resolve();
+    } catch (error) {
+      console.log('error', error);
+      reject(error);
+    }
+  });
+};
+const getLogoFromRiteKit = (company) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+      console.log(
+        `starting image lookup for ${company.name} with for ${brandNameUrl}`
+      );
+
+      const imagePath = path.join(
+        __dirname,
+        '../../',
+        'public/logos',
+        `${brandNameUrl}.png`
+      );
+      // check for existing file
+      const fileFound = fs.existsSync(imagePath);
+      if (!fileFound) {
+        const riteKitResponse = await axios.get(
+          `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=${process.env.RITE_KIT_CLIENT_ID}`
+        );
+        // console.log('riteKitResponse', riteKitResponse.data);
+        if (riteKitResponse.data.url) {
+          const imageResponse = await axios.get(riteKitResponse.data.url, {
+            responseType: 'stream',
+          });
+          imageResponse.data.pipe(
+            fs.createWriteStream(
+              path.join(
+                __dirname,
+                '../../',
+                'public/logos',
+                `${brandNameUrl}.png`
+              )
+            )
+          );
+        }
+        console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+        await Company.findOneAndUpdate(
+          { _id: company._id },
+          { brandLogoUrl: `${brandNameUrl}.png`, isActive: true }
+        );
+      }
+      console.log(`done with ${company.name}`);
+      resolve();
+    } catch (error) {
+      console.log('error', error);
+      reject(error);
+    }
+  });
+};
 // #7
 module.exports.importLogos = async () => {
   return new Promise(async (resolve, reject) => {
@@ -529,52 +622,15 @@ module.exports.importLogos = async () => {
       (async () => {
         const getImagesLimited = limiter(async (companies) => {
           await asyncForEach(companies, async (company, index, array) => {
-            try {
-              const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
-              console.log(
-                `starting image lookup for ${company.name} with for ${brandNameUrl}`
-              );
-
-              const riteKitResponse = await axios.get(
-                `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=${process.env.RITE_KIT_CLIENT_ID}`
-              );
-
-              // console.log('riteKitResponse', riteKitResponse.data);
-              if (riteKitResponse.data.url) {
-                const imageResponse = await axios.get(
-                  riteKitResponse.data.url,
-                  {
-                    responseType: 'stream',
-                  }
-                );
-                imageResponse.data.pipe(
-                  fs.createWriteStream(
-                    path.join(
-                      __dirname,
-                      '../../',
-                      'public/logos',
-                      `${brandNameUrl}.png`
-                    )
-                  )
-                );
-              }
-              console.log(`saving ${company.name} image ${brandNameUrl}.png`);
-              await Company.findOneAndUpdate(
-                { _id: company._id },
-                { brandLogoUrl: `${brandNameUrl}.png`, isActive: true }
-              );
-
-              console.log(`done with ${company.name}`);
-            } catch (error) {
-              console.log('error', error);
-            }
+            // await getLogoFromRiteKit(company);
+            await getLogoFromUplead(company);
           });
-        }, 60000);
+        }, 1000);
 
         const companies = await Company.find({
           // brandUrl: { $ne: null },
           // brandLogoUrl: { $eq: null },
-        });
+        }).sort({ brandLogoUrl: 1 });
         let start = 0;
 
         const last = companies.length - 1;
@@ -587,7 +643,7 @@ module.exports.importLogos = async () => {
         }
       })();
 
-      // console.log(`Done.`);
+      console.log(`Done.`);
       resolve();
     } catch (error) {
       console.log('error', error);
@@ -596,54 +652,51 @@ module.exports.importLogos = async () => {
   });
 };
 
-// module.exports.importLogos = async () => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const companies = await Company.find({
-//         brandUrl: { $ne: null },
-//         brandLogoUrl: { $eq: null },
-//       });
-//       await asyncForEach(companies, async (company, index, array) => {
-//         try {
-//           const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
-//           console.log(
-//             `starting image lookup for ${company.name} with for ${brandNameUrl}`
-//           );
-//           const upLeadResponse = await axios.get(
-//             `https://logo.uplead.com/${brandNameUrl}`,
-//             {
-//               responseType: 'stream',
-//             }
-//           );
+const getLogoFromUplead = (company) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+      console.log(
+        `starting image lookup for ${company.name} with for ${brandNameUrl}`
+      );
 
-//           upLeadResponse.data.pipe(
-//             fs.createWriteStream(
-//               path.join(
-//                 __dirname,
-//                 '../../',
-//                 'public/logos',
-//                 `${brandNameUrl}.png`
-//               )
-//             )
-//           );
+      const imagePath = path.join(
+        __dirname,
+        '../../',
+        'public/logos',
+        `${brandNameUrl}.png`
+      );
+      // check for existing file
+      const fileFound = fs.existsSync(imagePath);
+      if (!fileFound) {
+        const upLeadResponse = await axios.get(
+          `https://logo.uplead.com/${brandNameUrl}`,
+          {
+            responseType: 'stream',
+          }
+        );
 
-//           console.log(`saving ${company.name} image ${brandNameUrl}.png`);
-//           await Company.findOneAndUpdate(
-//             { _id: company._id },
-//             { brandLogoUrl: `${brandNameUrl}.png` }
-//           );
-
-//           console.log(`done with ${company.name}`);
-//         } catch (error) {
-//           console.log('error', error);
-//         }
-//       });
-
-//       console.log(`Done.`);
-//       resolve();
-//     } catch (error) {
-//       console.log('error', error);
-//       reject(error);
-//     }
-//   });
-// };
+        upLeadResponse.data.pipe(
+          fs.createWriteStream(
+            path.join(
+              __dirname,
+              '../../',
+              'public/logos',
+              `${brandNameUrl}.png`
+            )
+          )
+        );
+        console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+        await Company.findOneAndUpdate(
+          { _id: company._id },
+          { brandLogoUrl: `${brandNameUrl}.png`, isActive: true }
+        );
+      }
+      console.log(`done with ${company.name}`);
+      resolve();
+    } catch (error) {
+      console.log('error', error);
+      reject(error);
+    }
+  });
+};

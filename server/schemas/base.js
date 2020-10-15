@@ -12,6 +12,7 @@ const typeDefs = gql`
     importCompanies: GeneralResponse
     importLogos: GeneralResponse
     importPoliticalContributionData: GeneralResponse
+    getMissingLogos: GeneralResponse
   }
 `;
 

@@ -13,6 +13,7 @@ const {
   importCategories,
   importLogos,
   importPoliticalContributionData,
+  getMissingLogos,
 } = require('../utils/bases');
 
 module.exports = {
@@ -174,6 +175,24 @@ module.exports = {
         if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
 
         await importLogos();
+
+        return createGeneralResponse({
+          ok: true,
+          message: 'Completed',
+        });
+      } catch (error) {
+        return createGeneralResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    getMissingLogos: async (parent, input, { isAdmin }) => {
+      try {
+        await connectDatabase();
+        if (!isAdmin) throw new Error(ERRORS.AUTH.DENIED);
+
+        await getMissingLogos();
 
         return createGeneralResponse({
           ok: true,
