@@ -55,6 +55,8 @@ const UserSchema = new Schema(
     companyResponses: [companyResponseSchema],
     isProfilePublic: { type: Boolean, default: false },
     mustResetPassword: { type: Boolean, default: false },
+    isAccountLocked: { type: Boolean, default: false },
+    failedLoginAttempts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

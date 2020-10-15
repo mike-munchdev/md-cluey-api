@@ -5,6 +5,8 @@ module.exports.ERRORS = {
     NOT_FOUND: 'No user found.',
     EMAIL_AND_PASSWORD_INCORRECT:
       'Email and password combination is incorrect.',
+    EMAIL_AND_PASSWORD_INCORRECT_FAILED_ATTEMPTS:
+      'Email and password combination is incorrect. You have <REMAINING_ATTEMPTS> attempts remaining.',
     ACCOUNT_EMAIL_TAKEN: 'Email address already associated with an account.',
     ACCOUNT_FACEBOOK_TAKEN:
       'Facebook account already associated with an account.',
@@ -12,6 +14,7 @@ module.exports.ERRORS = {
     ACCOUNT_GOOGLE_TAKEN: 'Google account already associated with an account.',
     ACCOUNT_GOOGLE_FAILED: 'Google account login failed.',
     ACCOUNT_NOT_ACTIVATED: 'Your account is not active.',
+    ACCOUNT_LOCKED: 'Your account is locked.',
     PUSH_TOKEN_ALREADY_EXISTS: 'Push token already exists.',
     CONFIRM_TOKEN_NOT_FOUND: 'Confirm token not found.',
     USERNAME_ALREADY_TAKEN: 'The username you have selected is already taken.',
