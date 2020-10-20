@@ -9,6 +9,62 @@ module.exports.createUserResponse = ({ ok, user = null, error = null }) => {
   };
 };
 
+module.exports.createUsersResponse = ({
+  ok,
+  users = null,
+  error = null,
+  searchText = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    users,
+    error,
+  };
+};
+
+module.exports.createFriendshipsResponse = ({
+  ok,
+  friendships = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    friendships,
+    error,
+  };
+};
+module.exports.createUserLiteResponse = ({
+  ok,
+  users = null,
+  error = null,
+  searchText = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    users,
+    error,
+    searchText,
+  };
+};
+
+module.exports.createFriendshipResponse = ({
+  ok,
+  friendship = null,
+  error = null,
+  searchText = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    friendship,
+    error,
+    searchText,
+  };
+};
+
 module.exports.createGeneralResponse = ({
   ok,
   message = null,
@@ -50,6 +106,7 @@ module.exports.createProductsResponse = ({
     ok,
     products,
     error,
+    searchText,
   };
 };
 module.exports.createCompaniesResponse = ({
@@ -63,6 +120,7 @@ module.exports.createCompaniesResponse = ({
     ok,
     companies,
     error,
+    searchText,
   };
 };
 module.exports.createCompanyResponse = ({
@@ -95,7 +153,6 @@ module.exports.createProductTypesResponse = ({
   ok,
   productTypes = null,
   error = null,
-  searchText = null,
 }) => {
   if (error) Bugsnag.notify(error);
   return {

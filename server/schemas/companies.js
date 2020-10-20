@@ -9,6 +9,7 @@ const typeDefs = gql`
     brandLogoUrl: String
     parentCompanies: [ParentCompany!]
     productTypes: [ProductType!]
+    politicalContributions: [PoliticalContributions!]
     categories: [Category!]
     isActive: Boolean
   }
@@ -21,7 +22,7 @@ const typeDefs = gql`
   }
   type CompanyResponse {
     ok: Boolean!
-    company: Company!
+    company: Company
     error: Error
   }
 

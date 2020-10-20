@@ -10,6 +10,7 @@ const {
 } = require('../utils/responses');
 
 const Company = require('../models/Company');
+const { companyPopulate } = require('../utils/populate');
 
 module.exports = {
   Query: {
@@ -19,31 +20,13 @@ module.exports = {
 
         let companies;
 
-        if (exact) {
-          companies = await Company.find({ name })
-            .populate({
-              path: 'parentCompanies',
-              populate: {
-                path: 'politicalContributions',
-              },
-            })
-            .populate('categories')
-            .populate('productTypes')
-            .populate('tags');
-        } else {
-          companies = await Company.find({
-            name: { $regex: name, $options: 'i' },
-          })
-            .populate({
-              path: 'parentCompanies',
-              populate: {
-                path: 'politicalContributions',
-              },
-            })
-            .populate('categories')
-            .populate('productTypes')
-            .populate('tags');
-        }
+        const nameQuery = exact
+          ? { name }
+          : {
+              name: { $regex: name, $options: 'i' },
+            };
+
+        companies = await Company.find(nameQuery).populate(companyPopulate);
 
         return createCompaniesResponse({
           ok: true,
@@ -61,16 +44,9 @@ module.exports = {
       try {
         await connectDatabase();
 
-        const companies = await Company.find({ categories: id })
-          .populate({
-            path: 'parentCompanies',
-            populate: {
-              path: 'politicalContributions',
-            },
-          })
-          .populate('categories')
-          .populate('productTypes')
-          .populate('tags');
+        const companies = await Company.find({ categories: id }).populate(
+          companyPopulate
+        );
 
         return createCompaniesResponse({
           ok: true,
@@ -87,16 +63,9 @@ module.exports = {
       try {
         await connectDatabase();
 
-        const companies = await Company.find({ productTypes: id })
-          .populate({
-            path: 'parentCompanies',
-            populate: {
-              path: 'politicalContributions',
-            },
-          })
-          .populate('categories')
-          .populate('productTypes')
-          .populate('tags');
+        const companies = await Company.find({ productTypes: id }).populate(
+          companyPopulate
+        );
 
         return createCompaniesResponse({
           ok: true,
@@ -113,16 +82,10 @@ module.exports = {
       try {
         await connectDatabase();
 
-        const company = await Company.findById(id)
-          .populate({
-            path: 'parentCompanies',
-            populate: {
-              path: 'politicalContributions',
-            },
-          })
-          .populate('categories')
-          .populate('productTypes')
-          .populate('tags');
+        const company = await Company.findById(id).populate(companyPopulate);
+
+        if (!company)
+          throw new Error(ERRORS.COMPANY.NOT_FOUND_WITH_PROVIDED_INFO);
 
         return createCompanyResponse({
           ok: true,

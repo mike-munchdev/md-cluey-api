@@ -21,23 +21,17 @@ module.exports = {
         //   throw new Error(ERRORS.PRODUCT.SEARCH_TEXT_LENGTH_TOO_SHORT);
         let products;
 
-        if (exact) {
-          products = await Product.find({ name })
-            .populate('brand')
-            .populate('productType')
-            .populate('parentCompanies')
-            .populate('tags');
-        } else {
-          //   const $regex = escapeStringRegexp(`/${name}/`);
+        const nameQuery = exact
+          ? { name }
+          : {
+              name: { $regex: name, $options: 'i' },
+            };
 
-          products = await Product.find({
-            name: { $regex: name, $options: 'i' },
-          })
-            .populate('brand')
-            .populate('productType')
-            .populate('parentCompanies')
-            .populate('tags');
-        }
+        products = await Product.find(nameQuery)
+          .populate('brand')
+          .populate('productType')
+          .populate('parentCompanies')
+          .populate('tags');
 
         return createProductsResponse({
           ok: true,

@@ -1,36 +1,44 @@
 module.exports.transformCompany = (company) => {
-  console.log('CompanySchema transform');
   //Rename fields
-  company.id = company._id;
+
+  let obj = company;
+
+  obj.id = company._id;
 
   if (company.productTypes) {
-    company.productTypes = company.productTypes.map((c) => {
+    obj.productTypes = company.productTypes.map((c) => {
       c.id = c._id;
-      // delete c._id;
       return c;
     });
   }
 
   if (company.categories) {
-    company.categories = company.categories.map((c) => {
+    obj.categories = company.categories.map((c) => {
       c.id = c._id;
-      // delete c._id;
       return c;
     });
   }
 
   if (company.parentCompanies) {
-    company.parentCompanies = company.parentCompanies.map((c) => {
-      c.id = c._id;
-      if (c.politicalContributions) {
-        c.politicalContributions = c.politicalContributions.map((p) => {
-          p.id = p._id;
-          return p;
-        });
-      }
-      return c;
+    obj.parentCompanies = company.parentCompanies.map((p) => {
+      p.id = p._id;
+      return p;
     });
   }
 
-  return company;
+  if (company.tags) {
+    obj.tags = company.tags.map((t) => {
+      t.id = t._id;
+      return t;
+    });
+  }
+
+  if (company.politicalContributions) {
+    obj.politicalContributions = company.politicalContributions.map((pc) => {
+      pc.id = pc._id;
+      return pc;
+    });
+  }
+
+  return obj;
 };

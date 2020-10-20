@@ -1,58 +1,65 @@
 const mongoose = require('mongoose');
 const { default: validatorF } = require('validator');
+const { genderEnum, companyResponseEnum } = require('../utils/enum');
 const { transformCompany } = require('../utils/transform');
 
 const Schema = mongoose.Schema;
 
-const companyResponseSchema = new Schema({
-  company: {
-    ref: 'Company',
-    type: Schema.Types.ObjectId,
-  },
-  response: {
-    type: String,
-    enum: ['will-buy', 'will-buy-later', 'will-not-buy', 'will-not-buy-later'],
-  },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-const UserSchema = new Schema({
-  email: {
-    type: String,
-    validate: {
-      validator: (v) => validatorF.isEmail(v),
-      message: 'Email validation failed',
+const companyResponseSchema = new Schema(
+  {
+    company: {
+      ref: 'Company',
+      type: Schema.Types.ObjectId,
     },
-    unique: true,
+    response: {
+      type: String,
+      enum: companyResponseEnum,
+    },
   },
-  username: {
-    type: String,
-  },
-  password: { type: String, required: false },
-  firstName: { type: String, required: false },
-  middleName: { type: String, required: false },
-  lastName: { type: String, required: false },
-  dob: { type: Date },
-  city: { type: String },
-  state: { type: String },
-  gender: {
-    type: String,
-    enum: ['male', 'female', 'other'],
-  },
-  googleId: { type: String },
-  googleAuthToken: { type: String },
+  { timestamps: true }
+);
 
-  facebookId: { type: String },
-  facebookAuthToken: { type: String },
+const UserSchema = new Schema(
+  {
+    email: {
+      type: String,
+      validate: {
+        validator: (v) => validatorF.isEmail(v),
+        message: 'Email validation failed',
+      },
+      unique: true,
+    },
+    username: {
+      type: String,
+    },
+    password: { type: String, required: false },
+    firstName: { type: String, required: false },
+    middleName: { type: String, required: false },
+    lastName: { type: String, required: false },
+    dob: { type: Date },
+    city: { type: String },
+    state: { type: String },
+    gender: {
+      type: String,
+      enum: genderEnum,
+    },
+    googleId: { type: String },
+    googleAuthToken: { type: String },
 
-  isActive: { type: Boolean, default: false },
-  confirmToken: { type: String },
-  pushTokens: [String],
-  companyResponses: [companyResponseSchema],
-  isProfilePublic: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+    facebookId: { type: String },
+    facebookAuthToken: { type: String },
+
+    isActive: { type: Boolean, default: false },
+    confirmToken: { type: String },
+    friends: [{ type: Schema.Types.ObjectId, ref: 'Friends' }],
+    companyResponses: [companyResponseSchema],
+    isProfilePublic: { type: Boolean, default: false },
+    mustResetPassword: { type: Boolean, default: false },
+    isAccountLocked: { type: Boolean, default: false },
+    failedLoginAttempts: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
 
 // TODO: encrypt password in database;
 UserSchema.pre('save', async function () {
@@ -65,16 +72,10 @@ UserSchema.pre('save', async function () {
 
 UserSchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('UserSchema: transform');
-  if (obj.companyResponses) {
-    obj.companyResponses = obj.companyResponses.map((r) => {
-      r.id = r._id;
-      // r.company = transformCompany(r.company);
-      r.companyId = r.company._id;
-      // delete r._id;
-      r.company.id = r.company._id;
 
-      return r;
+  if (this.companyResponses) {
+    obj.companyResponses = this.companyResponses.map((r) => {
+      return r.transform();
     });
   }
   //Rename fields
@@ -88,13 +89,14 @@ UserSchema.method('transform', function () {
 companyResponseSchema.method('transform', function () {
   let obj = this.toObject();
 
+  const company = transformCompany(obj.company);
+  obj.company = company;
+  // obj.company.id = obj.company._id;
   obj.companyId = obj.company._id;
-  obj.company.id = obj.company._id;
 
   //Rename fields
   obj.id = obj._id;
   delete obj._id;
-  delete obj.password;
 
   return obj;
 });

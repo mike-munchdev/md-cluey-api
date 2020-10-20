@@ -26,6 +26,7 @@ module.exports = async (args) => {
             arr[1].includes('getUserToken(') ||
             arr[1].includes('userSignup(') ||
             arr[1].includes('activateUserAccount(') ||
+            arr[1].includes('resetPassword(') ||
             arr[0].includes('query IntrospectionQuery {')
           ) {
             return { req, res: args.res };

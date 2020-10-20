@@ -16,6 +16,7 @@ const User = require('../models/User');
 const user = require('../resolvers/user');
 const path = require('path');
 const ParentCompany = require('../models/ParentCompany');
+const PoliticalContribution = require('../models/PoliticalContribution');
 
 const Airtable = require('airtable');
 const { camelizeKeys } = require('./case');
@@ -39,7 +40,11 @@ const bases = [
   },
   { name: 'Health & Nutrition', isActive: false, logoUrl: 'health.jpg' },
   { name: 'Pet Care', isActive: false, logoUrl: 'pet-care.jpg' },
-  { name: 'Household Goods', isActive: false, logoUrl: 'household.jpg' },
+  {
+    name: 'Household Goods (COMPLETE)',
+    isActive: true,
+    logoUrl: 'household.jpg',
+  },
   { name: 'Baby & Kids', isActive: false, logoUrl: 'baby.jpg' },
   { name: 'Outdoors & Backyard', isActive: false, logoUrl: 'outdoors.jpg' },
   {
@@ -48,10 +53,10 @@ const bases = [
     logoUrl: 'furniture.jpg',
   },
   { name: 'Electronics', isActive: false, logoUrl: 'electronics.jpg' },
-  { name: 'Grocery', isActive: false, logoUrl: 'grocery.jpg' },
+  { name: 'Grocery (COMPLETE)', isActive: true, logoUrl: 'grocery.jpg' },
   {
-    name: 'Dining & Entertainment',
-    isActive: false,
+    name: 'Dining & Entertainment (COMPLETE)',
+    isActive: true,
     logoUrl: 'dining-entertainment.jpg',
   },
   {
@@ -59,22 +64,20 @@ const bases = [
     isActive: false,
     logoUrl: 'apparel.jpg',
   },
+  {
+    name: 'Parent Companies (COMPLETE)',
+    isActive: true,
+    logoUrl: 'parent-companies.jpg',
+  },
 ];
 
-const getOpenSecretsData = (data, year, companyName) => {
-  return data
-    .filter(
-      (d) =>
-        d['@attributes'].cycle === year &&
-        d['@attributes'].org_name.toLowerCase() === companyName.toLowerCase() &&
-        !d['@attributes'].subsidiary_id
-    )
-    .map((d) => camelizeKeys(d['@attributes']));
+const convertOpenSecretsData = (data) => {
+  return data.map((d) => d['@attributes']);
 };
 
 const getOrgIdFromParentCompany = (parentCompany) => {
   return parentCompany.politicalContributions.length > 0
-    ? parentCompany.politicalContributions[0].orgId
+    ? parentCompany.politicalContributions[0].org_id
     : null;
 };
 
@@ -142,52 +145,58 @@ module.exports.importProducts = async () => {
     try {
       await connectDatabase();
       // Product
-      await asyncForEach(bases, async (b, index, array) => {
-        try {
-          console.log('Getting products from base:', b);
-          const records = await base(b).select({ view: 'Grid view' }).all();
-          await asyncForEach(records, async (record, index, array) => {
-            if (record.fields['Product Name']) {
-              // create product
-              const product = new Product({
-                name: record.fields['Product Name'],
-              });
+      await asyncForEach(
+        bases.filter((b) => b.isActive),
 
-              // get tags if any
-              if (
-                record.fields['Product Tags'] &&
-                record.fields['Product Tags'].length > 0
-              ) {
-                const tags = await Tag.find({
-                  name: { $in: record.fields['Product Tags'] },
-                });
-                product.tags = tags;
-              }
-
-              // get brand
-              if (record.fields['Search by name (primary query)']) {
-                const brand = await Company.findOne({
-                  name: record.fields['Search by name (primary query)'],
-                });
-                product.brand = brand;
-              }
-
-              // get product type
-              if (record.fields['Product Type']) {
-                const productType = await ProductType.findOne({
-                  name: record.fields['Product Type'],
+        async (b, index, array) => {
+          try {
+            console.log('Getting products from base:', b);
+            const records = await base(b.name)
+              .select({ view: 'Grid view' })
+              .all();
+            await asyncForEach(records, async (record, index, array) => {
+              if (record.fields['Product Name']) {
+                // create product
+                const product = new Product({
+                  name: record.fields['Product Name'],
                 });
 
-                product.productType = productType;
-              }
+                // get tags if any
+                if (
+                  record.fields['Product Tags'] &&
+                  record.fields['Product Tags'].length > 0
+                ) {
+                  const tags = await Tag.find({
+                    name: { $in: record.fields['Product Tags'] },
+                  });
+                  product.tags = tags;
+                }
 
-              await product.save();
-            }
-          });
-        } catch (error) {
-          console.error(error);
+                // get brand
+                if (record.fields['Search by name (primary query)']) {
+                  const brand = await Company.findOne({
+                    name: record.fields['Search by name (primary query)'],
+                  });
+                  product.brand = brand;
+                }
+
+                // get product type
+                if (record.fields['Product Type']) {
+                  const productType = await ProductType.findOne({
+                    name: record.fields['Product Type'],
+                  });
+
+                  product.productType = productType;
+                }
+
+                await product.save();
+              }
+            });
+          } catch (error) {
+            console.error(error);
+          }
         }
-      });
+      );
       console.log('Done.');
 
       resolve();
@@ -198,6 +207,47 @@ module.exports.importProducts = async () => {
   });
 };
 
+const populatePoliticalContributionsData = (cycle) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const response = await fetch(
+        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=${cycle}&output=json`
+      );
+      const json = await response.json();
+      const data = convertOpenSecretsData(json.response.org);
+
+      await asyncForEach(data, async (d) => {
+        await PoliticalContribution.findOneAndUpdate(
+          { org_id: d.org_id, cycle: d.cycle },
+          { ...d },
+          {
+            upsert: true,
+          }
+        );
+      });
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+// #1
+module.exports.importPoliticalContributionData = async () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await connectDatabase();
+
+      populatePoliticalContributionsData(2020);
+      populatePoliticalContributionsData(2018);
+      populatePoliticalContributionsData(2016);
+
+      resolve();
+    } catch (error) {
+      console.log(error);
+      reject(error);
+    }
+  });
+};
 // #2
 module.exports.importParentCompanies = async () => {
   return new Promise(async (resolve, reject) => {
@@ -208,81 +258,42 @@ module.exports.importParentCompanies = async () => {
       //   'process.env.OPEN_SECRETS_API_KEY',
       //   process.env.OPEN_SECRETS_API_KEY
       // );
-      const response2020 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2020&output=json`
-      );
 
-      const json2020 = await response2020.json();
-      const data2020 = json2020.response.org;
+      await asyncForEach(
+        bases.filter((b) => b.isActive),
+        async (b, index, array) => {
+          try {
+            console.log('Getting parent companies from base:', b);
+            const baseName = b.name.replace(' (COMPLETE)', '');
+            const records = await base(b.name)
+              .select({ view: 'Grid view' })
+              .all();
+            await asyncForEach(records, async (record, index, array) => {
+              if (record.fields['Parent Company(ies)']) {
+                // const orgs = [];
+                // const orgIds = record.fields['OrgID(s)'];
+                // // get political info
 
-      const response2018 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2018&output=json`
-      );
-      const json2018 = await response2018.json();
-      const data2018 = json2018.response.org;
-
-      const response2016 = await fetch(
-        `https://www.opensecrets.org/api/?method=clueyOrgs&apikey=${process.env.OPEN_SECRETS_API_KEY}&cycle=2016&output=json`
-      );
-      const json2016 = await response2016.json();
-      const data2016 = json2016.response.org;
-
-      await asyncForEach(bases, async (b, index, array) => {
-        try {
-          console.log('Getting parent companies from base:', b);
-          const records = await base(b).select({ view: 'Grid view' }).all();
-          await asyncForEach(records, async (record, index, array) => {
-            if (record.fields['Parent Company(ies)']) {
-              // const orgs = [];
-              // const orgIds = record.fields['OrgID(s)'];
-              // // get political info
-
-              await asyncForEach(
-                record.fields['Parent Company(ies)'],
-                async (parentCompany, index, array) => {
-                  console.log('parentCompany', parentCompany);
-                  const pi2016 = getOpenSecretsData(
-                    data2016,
-                    '2016',
-                    parentCompany
-                  );
-
-                  const pi2018 = getOpenSecretsData(
-                    data2018,
-                    '2018',
-                    parentCompany
-                  );
-
-                  const pi2020 = getOpenSecretsData(
-                    data2020,
-                    '2020',
-                    parentCompany
-                  );
-
-                  // find one and update
-                  const parentCompanyDb = await ParentCompany.findOneAndUpdate(
-                    { name: parentCompany },
-                    {
-                      name: parentCompany,
-                      politicalContributions: [...pi2016, ...pi2018, ...pi2020],
-                    },
-                    { upsert: true, new: true }
-                  );
-                  if (parentCompanyDb) {
-                    const orgId = getOrgIdFromParentCompany(parentCompanyDb);
-                    if (orgId) {
-                      parentCompanyDb.orgId = orgId;
-                      await parentCompanyDb.save();
-                    }
+                await asyncForEach(
+                  record.fields['Parent Company(ies)'],
+                  async (parentCompany, index, array) => {
+                    // find one and update
+                    const parentCompanyDb = await ParentCompany.findOneAndUpdate(
+                      { name: parentCompany },
+                      {
+                        name: parentCompany,
+                      },
+                      { upsert: true, new: true }
+                    );
                   }
-                }
-              );
-            }
-          });
-        } catch (error) {
-          console.error(error);
+                );
+              }
+            });
+          } catch (error) {
+            console.error(error);
+          }
         }
-      });
+      );
 
       console.log('Done.');
 
@@ -302,83 +313,108 @@ module.exports.importCompanies = async () => {
       await connectDatabase();
       // Search by name (primary query)
       let brands = [];
-      await asyncForEach(bases, async (b, index, array) => {
-        const baseName = b.replace(' (COMPLETE)', '');
-        const currentCategory = await Category.findOne({
-          name: baseName,
-        });
-        try {
-          console.log('Getting companies from base:', b);
-          const records = await base(b).select({ view: 'Grid view' }).all();
-          await asyncForEach(records, async (record, index, array) => {
-            // create brand
-            if (record.fields['Search by name (primary query)']) {
-              let existingCompany = await Company.findOne({
-                name: record.fields['Search by name (primary query)'],
-              });
+      await asyncForEach(
+        bases.filter((b) => b.isActive),
 
-              if (!existingCompany) {
-                console.log(
-                  `adding new company ${record.fields['Search by name (primary query)']}`
-                );
-                existingCompany = new Company({
+        async (b, index, array) => {
+          const baseName = b.name.replace(' (COMPLETE)', '');
+          const currentCategory = await Category.findOne({
+            name: baseName,
+          });
+          try {
+            console.log('Getting companies from base:', b);
+            const records = await base(b.name)
+              .select({ view: 'Grid view' })
+              .all();
+
+            await asyncForEach(records, async (record, index, array) => {
+              // create brand
+              if (record.fields['Search by name (primary query)']) {
+                let existingCompany = await Company.findOne({
                   name: record.fields['Search by name (primary query)'],
                 });
 
-                // add brand url
-                if (record.fields['Brand URL']) {
-                  existingCompany.brandUrl = record.fields['Brand URL'];
-                }
-
-                // add parent companies
-                if (
-                  record.fields['Parent Company(ies)'] &&
-                  record.fields['Parent Company(ies)'].length > 0
-                ) {
-                  const parentCompanies = await ParentCompany.find({
-                    name: { $in: record.fields['Parent Company(ies)'] },
+                if (!existingCompany) {
+                  console.log(
+                    `adding new company ${record.fields['Search by name (primary query)']}`
+                  );
+                  existingCompany = new Company({
+                    name: record.fields['Search by name (primary query)'],
                   });
-                  existingCompany.parentCompanies = parentCompanies;
-                }
-                // add category
-                const existingCategory = existingCompany.categories.find(
-                  (c) => {
-                    console.log('c', c);
-                    return c.id === currentCategory._id;
+
+                  // add brand url
+                  if (record.fields['Brand URL']) {
+                    const brandNameUrl = getDomainNameBrandUrl(
+                      record.fields['Brand URL']
+                    );
+                    existingCompany.brandUrl = record.fields['Brand URL'];
+                    existingCompany.brandLogoUrl = `${brandNameUrl}.png`;
                   }
-                );
-                // console.log('existingCategory', existingCategory);
-                // console.log('currentCategory', currentCategory);
 
-                if (!existingCategory) {
-                  existingCompany.categories.push(currentCategory.id);
-                }
+                  // add parent companies
+                  if (
+                    record.fields['Parent Company(ies)'] &&
+                    record.fields['Parent Company(ies)'].length > 0
+                  ) {
+                    const parentCompanies = await ParentCompany.find({
+                      name: { $in: record.fields['Parent Company(ies)'] },
+                    });
+                    existingCompany.parentCompanies = parentCompanies;
+                  }
 
-                await existingCompany.save();
-              }
+                  // add political contributions
+                  if (
+                    record.fields['OrgID(s)'] &&
+                    record.fields['OrgID(s)'].length > 0
+                  ) {
+                    const politicalContributions = await PoliticalContribution.find(
+                      {
+                        org_id: { $in: record.fields['OrgID(s)'] },
+                      }
+                    );
+                    existingCompany.politicalContributions = politicalContributions;
+                  }
+                  // add category
+                  const existingCategory = existingCompany.categories.find(
+                    (c) => {
+                      console.log('c', c);
+                      return c.id === currentCategory._id;
+                    }
+                  );
+                  // console.log('existingCategory', existingCategory);
+                  // console.log('currentCategory', currentCategory);
 
-              if (record.fields['Product Type']) {
-                const currentProductType = await ProductType.findOne({
-                  name: record.fields['Product Type'],
-                });
+                  if (!existingCategory) {
+                    existingCompany.categories.push(currentCategory.id);
+                  }
 
-                const existingProductType = await Company.findOne({
-                  _id: existingCompany.id,
-                  productTypes: currentProductType._id,
-                });
-
-                if (!existingProductType) {
-                  existingCompany.productTypes.push(currentProductType._id);
+                  existingCompany.isActive = true;
                   await existingCompany.save();
                 }
+
+                if (record.fields['Product Type']) {
+                  const currentProductType = await ProductType.findOne({
+                    name: record.fields['Product Type'],
+                  });
+
+                  const existingProductType = await Company.findOne({
+                    _id: existingCompany.id,
+                    productTypes: currentProductType._id,
+                  });
+
+                  if (!existingProductType) {
+                    existingCompany.productTypes.push(currentProductType._id);
+                    await existingCompany.save();
+                  }
+                }
               }
-            }
-          });
-        } catch (error) {
-          console.log('error adding company', error);
-          // console.error(error);
+            });
+          } catch (error) {
+            console.log('error adding company', error);
+            // console.error(error);
+          }
         }
-      });
+      );
 
       console.log('Done.');
 
@@ -398,20 +434,26 @@ module.exports.importTags = async () => {
       await connectDatabase();
       // Product Types
       let tags = [];
-      await asyncForEach(bases, async (b, index, array) => {
-        try {
-          console.log('Getting tags from base:', b);
-          const records = await base(b).select({ view: 'Grid view' }).all();
-          records.forEach(async (record) => {
-            // create company
-            if (record.fields['Product Tags']) {
-              tags = [...tags, ...record.fields['Product Tags']];
-            }
-          });
-        } catch (error) {
-          console.error(error);
+      await asyncForEach(
+        bases.filter((b) => b.isActive),
+
+        async (b, index, array) => {
+          try {
+            console.log('Getting tags from base:', b);
+            const records = await base(b.name)
+              .select({ view: 'Grid view' })
+              .all();
+            records.forEach(async (record) => {
+              // create company
+              if (record.fields['Product Tags']) {
+                tags = [...tags, ...record.fields['Product Tags']];
+              }
+            });
+          } catch (error) {
+            console.error(error);
+          }
         }
-      });
+      );
       const uniqueTags = [...new Set(tags)].map((t) => ({ name: t }));
       await Tag.insertMany(uniqueTags);
       console.log('Done.');
@@ -431,39 +473,45 @@ module.exports.importProductTypes = async () => {
       await connectDatabase();
       // Product Types
       let productTypes = [];
-      await asyncForEach(bases, async (b, index, array) => {
-        try {
-          const baseName = b.replace(' (COMPLETE)', '');
-          const category = await Category.findOne({ name: baseName });
-          console.log('Getting product types from base:', baseName);
-          const records = await base(b).select({ view: 'Grid view' }).all();
-          await asyncForEach(records, async (record, index, array) => {
-            if (record.fields['Product Type']) {
-              let productType = await ProductType.findOne({
-                name: record.fields['Product Type'],
-              });
-
-              if (!productType) {
-                productType = await ProductType.create({
+      await asyncForEach(
+        bases.filter((b) => b.isActive),
+        async (b, index, array) => {
+          try {
+            const baseName = b.name.replace(' (COMPLETE)', '');
+            const category = await Category.findOne({ name: baseName });
+            console.log('Getting product types from base:', baseName);
+            const records = await base(b.name)
+              .select({ view: 'Grid view' })
+              .all();
+            await asyncForEach(records, async (record, index, array) => {
+              if (record.fields['Product Type']) {
+                let productType = await ProductType.findOne({
                   name: record.fields['Product Type'],
                 });
-              }
 
-              const existingProductType = await Category.findOne({
-                _id: category._id,
-                productTypes: productType._id,
-              });
+                if (!productType) {
+                  productType = await ProductType.create({
+                    isActive: true,
+                    name: record.fields['Product Type'],
+                  });
+                }
 
-              if (!existingProductType) {
-                category.productTypes.push(productType._id);
-                await category.save();
+                const existingProductType = await Category.findOne({
+                  _id: category._id,
+                  productTypes: productType._id,
+                });
+
+                if (!existingProductType) {
+                  category.productTypes.push(productType._id);
+                  await category.save();
+                }
               }
-            }
-          });
-        } catch (error) {
-          console.error(error);
+            });
+          } catch (error) {
+            console.error(error);
+          }
         }
-      });
+      );
 
       console.log('Done.');
       resolve();
@@ -474,6 +522,99 @@ module.exports.importProductTypes = async () => {
   });
 };
 
+module.exports.getMissingLogos = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const missingLogos = [];
+      const companies = await Company.find({}).sort({ brandLogoUrl: 1 });
+      await asyncForEach(companies, async (company, index, array) => {
+        const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+        console.log(
+          `starting image lookup for ${company.name} with for ${brandNameUrl}`
+        );
+
+        const imagePath = path.join(
+          __dirname,
+          '../../',
+          'public/logos',
+          `${brandNameUrl}.png`
+        );
+        // check for existing file
+        const fileFound = fs.existsSync(imagePath);
+        if (!fileFound) {
+          missingLogos.push(`${brandNameUrl}.png`);
+        }
+      });
+      const allFiles = missingLogos.join('\r\n');
+      console.log(allFiles);
+      const data = new Uint8Array(Buffer.from(allFiles));
+
+      fs.writeFile(
+        path.join(__dirname, '../../', 'public/logos', `missingLogos.txt`),
+        data,
+        (err) => {
+          if (err) throw err;
+          console.log('The file has been saved!');
+        }
+      );
+
+      resolve();
+    } catch (error) {
+      console.log('error', error);
+      reject(error);
+    }
+  });
+};
+const getLogoFromRiteKit = (company) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+      console.log(
+        `starting image lookup for ${company.name} with for ${brandNameUrl}`
+      );
+
+      const imagePath = path.join(
+        __dirname,
+        '../../',
+        'public/logos',
+        `${brandNameUrl}.png`
+      );
+      // check for existing file
+      const fileFound = fs.existsSync(imagePath);
+      if (!fileFound) {
+        const riteKitResponse = await axios.get(
+          `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=${process.env.RITE_KIT_CLIENT_ID}`
+        );
+        // console.log('riteKitResponse', riteKitResponse.data);
+        if (riteKitResponse.data.url) {
+          const imageResponse = await axios.get(riteKitResponse.data.url, {
+            responseType: 'stream',
+          });
+          imageResponse.data.pipe(
+            fs.createWriteStream(
+              path.join(
+                __dirname,
+                '../../',
+                'public/logos',
+                `${brandNameUrl}.png`
+              )
+            )
+          );
+        }
+        console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+        await Company.findOneAndUpdate(
+          { _id: company._id },
+          { brandLogoUrl: `${brandNameUrl}.png`, isActive: true }
+        );
+      }
+      console.log(`done with ${company.name}`);
+      resolve();
+    } catch (error) {
+      console.log('error', error);
+      reject(error);
+    }
+  });
+};
 // #7
 module.exports.importLogos = async () => {
   return new Promise(async (resolve, reject) => {
@@ -481,52 +622,15 @@ module.exports.importLogos = async () => {
       (async () => {
         const getImagesLimited = limiter(async (companies) => {
           await asyncForEach(companies, async (company, index, array) => {
-            try {
-              const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
-              console.log(
-                `starting image lookup for ${company.name} with for ${brandNameUrl}`
-              );
-
-              const riteKitResponse = await axios.get(
-                `https://api.ritekit.com/v2/company-insights/logo?domain=${brandNameUrl}&client_id=${process.env.RITE_KIT_CLIENT_ID}`
-              );
-
-              // console.log('riteKitResponse', riteKitResponse.data);
-              if (riteKitResponse.data.url) {
-                const imageResponse = await axios.get(
-                  riteKitResponse.data.url,
-                  {
-                    responseType: 'stream',
-                  }
-                );
-                imageResponse.data.pipe(
-                  fs.createWriteStream(
-                    path.join(
-                      __dirname,
-                      '../../',
-                      'public/logos',
-                      `${brandNameUrl}.png`
-                    )
-                  )
-                );
-              }
-              console.log(`saving ${company.name} image ${brandNameUrl}.png`);
-              await Company.findOneAndUpdate(
-                { _id: company._id },
-                { brandLogoUrl: `${brandNameUrl}.png` }
-              );
-
-              console.log(`done with ${company.name}`);
-            } catch (error) {
-              console.log('error', error);
-            }
+            // await getLogoFromRiteKit(company);
+            await getLogoFromUplead(company);
           });
-        }, 60000);
+        }, 1000);
 
         const companies = await Company.find({
           // brandUrl: { $ne: null },
           // brandLogoUrl: { $eq: null },
-        });
+        }).sort({ brandLogoUrl: 1 });
         let start = 0;
 
         const last = companies.length - 1;
@@ -539,7 +643,7 @@ module.exports.importLogos = async () => {
         }
       })();
 
-      // console.log(`Done.`);
+      console.log(`Done.`);
       resolve();
     } catch (error) {
       console.log('error', error);
@@ -548,54 +652,51 @@ module.exports.importLogos = async () => {
   });
 };
 
-// module.exports.importLogos = async () => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const companies = await Company.find({
-//         brandUrl: { $ne: null },
-//         brandLogoUrl: { $eq: null },
-//       });
-//       await asyncForEach(companies, async (company, index, array) => {
-//         try {
-//           const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
-//           console.log(
-//             `starting image lookup for ${company.name} with for ${brandNameUrl}`
-//           );
-//           const upLeadResponse = await axios.get(
-//             `https://logo.uplead.com/${brandNameUrl}`,
-//             {
-//               responseType: 'stream',
-//             }
-//           );
+const getLogoFromUplead = (company) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const brandNameUrl = getDomainNameBrandUrl(company.brandUrl);
+      console.log(
+        `starting image lookup for ${company.name} with for ${brandNameUrl}`
+      );
 
-//           upLeadResponse.data.pipe(
-//             fs.createWriteStream(
-//               path.join(
-//                 __dirname,
-//                 '../../',
-//                 'public/logos',
-//                 `${brandNameUrl}.png`
-//               )
-//             )
-//           );
+      const imagePath = path.join(
+        __dirname,
+        '../../',
+        'public/logos',
+        `${brandNameUrl}.png`
+      );
+      // check for existing file
+      const fileFound = fs.existsSync(imagePath);
+      if (!fileFound) {
+        const upLeadResponse = await axios.get(
+          `https://logo.uplead.com/${brandNameUrl}`,
+          {
+            responseType: 'stream',
+          }
+        );
 
-//           console.log(`saving ${company.name} image ${brandNameUrl}.png`);
-//           await Company.findOneAndUpdate(
-//             { _id: company._id },
-//             { brandLogoUrl: `${brandNameUrl}.png` }
-//           );
-
-//           console.log(`done with ${company.name}`);
-//         } catch (error) {
-//           console.log('error', error);
-//         }
-//       });
-
-//       console.log(`Done.`);
-//       resolve();
-//     } catch (error) {
-//       console.log('error', error);
-//       reject(error);
-//     }
-//   });
-// };
+        upLeadResponse.data.pipe(
+          fs.createWriteStream(
+            path.join(
+              __dirname,
+              '../../',
+              'public/logos',
+              `${brandNameUrl}.png`
+            )
+          )
+        );
+        console.log(`saving ${company.name} image ${brandNameUrl}.png`);
+        await Company.findOneAndUpdate(
+          { _id: company._id },
+          { brandLogoUrl: `${brandNameUrl}.png`, isActive: true }
+        );
+      }
+      console.log(`done with ${company.name}`);
+      resolve();
+    } catch (error) {
+      console.log('error', error);
+      reject(error);
+    }
+  });
+};
