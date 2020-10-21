@@ -39,7 +39,9 @@ module.exports = {
             email: response.data.email,
           }).populate(companyResponsesPopulate);
 
+          console.log('user', user);
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
+
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
 
@@ -62,10 +64,11 @@ module.exports = {
           user = await User.findOne({ email }).populate(
             companyResponsesPopulate
           );
+          if (!user) throw new Error(ERRORS.USER.EMAIL_AND_PASSWORD_INCORRECT);
+
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
 
-          if (!user) throw new Error(ERRORS.USER.EMAIL_AND_PASSWORD_INCORRECT);
           if (user.isAccountLocked) throw new Error(ERRORS.USER.ACCOUNT_LOCKED);
 
           const isMatch = await comparePassword({
