@@ -327,10 +327,14 @@ module.exports = {
             appleIdentityToken
           );
           console.log('userWithAppleIdCount');
+          console.log('decodedEmail', decodedEmail);
+          console.log('sub', sub);
+
           const userWithAppleIdCount = await User.countDocuments({
             email: decodedEmail,
             appleId: sub,
           });
+
           if (userWithAppleIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_EMAIL_TAKEN);
         } else {
