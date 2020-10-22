@@ -130,6 +130,11 @@ const typeDefs = gql`
     recipientId: String!
   }
 
+  input ActivateUserAccountInput {
+    confirmToken: String!
+    email: String!
+  }
+
   type Query {
     getUserById(userId: String!): UserResponse!
     getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
@@ -147,7 +152,9 @@ const typeDefs = gql`
     resetPassword(email: String!): GeneralResponse!
     userSignup(input: UserSignupInput!): GeneralResponse!
     addPushToken(input: AddPushToken!): UserResponse!
-    activateUserAccount(confirmToken: String!): GeneralResponse!
+    activateUserAccount(
+      input: ActivateUserAccountInput!
+    ): AuthenticationResponse!
     updateCompanyResponseForUser(
       input: UserCompanyResponseInput!
     ): CompanyResponseResponse!
