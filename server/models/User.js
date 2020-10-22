@@ -45,6 +45,9 @@ const UserSchema = new Schema(
     },
     googleId: { type: String },
     googleAuthToken: { type: String },
+    appleId: { type: String },
+    appleAuthToken: { type: String },
+    appleIdentityToken: { type: String },
 
     facebookId: { type: String },
     facebookAuthToken: { type: String },

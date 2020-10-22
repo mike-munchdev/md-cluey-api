@@ -109,6 +109,9 @@ const typeDefs = gql`
     facebookAuthToken: String
     googleId: String
     googleAuthToken: String
+    appleId: String
+    appleAuthToken: String
+    appleIdentityToken: String
   }
 
   input AddPushToken {
