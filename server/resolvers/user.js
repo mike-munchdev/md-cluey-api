@@ -350,6 +350,7 @@ module.exports = {
           saveEmail = email;
         }
 
+        console.log('saveEmail', saveEmail);
         isActive =
           (appleId && appleAuthToken && appleIdentityToken) ||
           (facebookId && facebookAuthToken) ||
