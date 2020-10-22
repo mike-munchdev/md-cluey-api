@@ -2,6 +2,8 @@ module.exports.RESPONSES = {
   USER: {
     SIGNUP_SUCCESSFUL:
       'Success!  You should receive an email within the next few minutes to confirm your account.',
+    SIGNUP_SUCCESSFUL_SOCIAL:
+      'Success!  You can now use your social account to sign-in to the app.',
     PASSWORD_CHANGED: 'Password changed.',
     ACCOUNT_ACTIVATED: 'Your account is now active.',
     RESET_PASSWORD:

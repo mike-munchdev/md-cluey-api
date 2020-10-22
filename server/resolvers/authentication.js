@@ -1,5 +1,9 @@
 const axios = require('axios').default;
-const { comparePassword } = require('../utils/authentication');
+const {
+  comparePassword,
+  validateToken,
+  appleAuthKeys,
+} = require('../utils/authentication');
 const { ERRORS } = require('../constants/errors');
 const { convertError } = require('../utils/errors');
 const { generateToken } = require('../utils/authentication');
@@ -23,6 +27,9 @@ module.exports = {
         facebookAuthToken,
         googleAuthToken,
         googleId,
+        appleId,
+        appleAuthToken,
+        appleIdentityToken,
       },
       context
     ) => {
@@ -30,7 +37,19 @@ module.exports = {
         await connectDatabase();
 
         let user;
-        if (facebookId || facebookAuthToken) {
+        if (appleId || appleAuthToken || appleIdentityToken) {
+          user = await User.findOne({
+            email: email,
+            appleId,
+          }).populate(companyResponsesPopulate);
+
+          if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
+
+          if (!user.isActive)
+            throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
+
+          if (user.isAccountLocked) throw new Error(ERRORS.USER.ACCOUNT_LOCKED);
+        } else if (facebookId || facebookAuthToken) {
           const response = await axios.get(
             `https://graph.facebook.com/me?access_token=${facebookAuthToken}&fields=id,first_name,last_name,email`
           );
@@ -39,7 +58,6 @@ module.exports = {
             email: response.data.email,
           }).populate(companyResponsesPopulate);
 
-          console.log('user', user);
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
           if (!user.isActive)

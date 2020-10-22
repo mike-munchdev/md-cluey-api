@@ -323,33 +323,35 @@ module.exports = {
           facebookAuthToken,
           googleId,
           googleAuthToken,
+          appleId,
+          appleAuthToken,
+          appleIdentityToken,
         } = input;
 
         let isActive = false;
-        if (facebookId && facebookAuthToken) {
-          // TODO: check for unique facebookId
-          const userWithFacebookIdCount = await User.countDocuments({
-            facebookId,
+        let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
+        if (appleId) {
+          const userWithAppleIdCount = await User.countDocuments({
+            email,
+            appleId,
           });
-          if (userWithFacebookIdCount !== 0)
-            throw new Error(ERRORS.USER.ACCOUNT_FACEBOOK_TAKEN);
-          isActive = true;
-        } else if (googleAuthToken && googleId) {
-          // TODO: check for unique facebookId
-          const userWithGoogleIdCount = await User.countDocuments({
-            googleId,
-          });
-          if (userWithGoogleIdCount !== 0)
-            throw new Error(ERRORS.USER.ACCOUNT_GOOGLE_TAKEN);
-          isActive = true;
+          if (userWithAppleIdCount !== 0)
+            throw new Error(ERRORS.USER.ACCOUNT_EMAIL_TAKEN);
         } else {
-          // TODO: check for unique email
           const userWithEmailCount = await User.countDocuments({
             email,
           });
           if (userWithEmailCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_EMAIL_TAKEN);
         }
+
+        isActive =
+          (appleId && appleAuthToken && appleIdentityToken) ||
+          (facebookId && facebookAuthToken) ||
+          (googleAuthToken && googleId)
+            ? true
+            : false;
+
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
@@ -363,7 +365,8 @@ module.exports = {
                 }),
         });
 
-        if (!facebookId && !googleId) {
+        if (!facebookId && !googleId && !appleId) {
+          message = RESPONSES.USER.SIGNUP_SUCCESSFUL;
           const mail = await Mail.create({
             mailFrom: process.env.MAIL_FROM_ADDRESS,
             mailTo: user.email,
@@ -378,7 +381,7 @@ module.exports = {
         }
         return createGeneralResponse({
           ok: true,
-          message: RESPONSES.USER.SIGNUP_SUCCESSFUL,
+          message,
         });
       } catch (error) {
         return createGeneralResponse({
