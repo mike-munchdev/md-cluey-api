@@ -317,24 +317,22 @@ module.exports = {
           appleAuthToken,
           appleIdentityToken,
         } = input;
-        console.log('userSignup', appleId, appleAuthToken, appleIdentityToken);
+
         let isActive = false;
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
-
+        let saveEmail;
         if (appleId || appleIdentityToken) {
           console.log('calling decodeAppleToken');
           const { decodedEmail, sub } = await decodeAppleToken(
             appleIdentityToken
           );
-          console.log('userWithAppleIdCount');
-          console.log('decodedEmail', decodedEmail);
-          console.log('sub', sub);
 
           const userWithAppleIdCount = await User.countDocuments({
             email: decodedEmail,
             appleId: sub,
           });
 
+          saveEmail = decodedEmail;
           if (userWithAppleIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_EMAIL_TAKEN);
         } else {
@@ -343,6 +341,8 @@ module.exports = {
           });
           if (userWithEmailCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_EMAIL_TAKEN);
+
+          saveEmail = email;
         }
 
         isActive =
@@ -355,6 +355,7 @@ module.exports = {
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
+          email: saveEmail,
           isActive,
           confirmToken:
             facebookId || googleId
