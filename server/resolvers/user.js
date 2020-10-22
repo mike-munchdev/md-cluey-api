@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongoose').Types;
-const jwksClient = require('jwks-rsa');
+
 const randomstring = require('randomstring');
 const { ERRORS } = require('../constants/errors');
 const { MESSAGES } = require('../constants/messages');
@@ -33,7 +33,7 @@ const Friends = require('../models/Friends');
 const { friendshipEnum, notificationTypeEnum } = require('../utils/enum');
 const { updateFriendshipRequest } = require('../utils/friend');
 const { addNotification } = require('../utils/notification');
-const { validateToken } = require('../utils/authentication');
+const { validateToken, decodeAppleToken } = require('../utils/authentication');
 
 module.exports = {
   Query: {
@@ -317,28 +317,14 @@ module.exports = {
           appleAuthToken,
           appleIdentityToken,
         } = input;
-        console.log('userSignup');
+
         let isActive = false;
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
-        if (appleId) {
-          const client = jwksClient({
-            strictSsl: true, // Default value
-            jwksUri: process.env.APPLE_RSA_KEYS_URL,
-            timeout: 30000, // Defaults to 30s
-          });
 
-          const key = await client.getSigningKeyAsync(
-            process.env.APPLE_RSA_KEY
+        if (appleId || appleIdentityToken) {
+          const { decodedEmail, sub } = await decodeAppleToken(
+            appleIdentityToken
           );
-
-          const signingKey = key.getPublicKey();
-
-          // Now I can use this to configure my Express or Hapi middleware
-
-          const decoded = await validateToken(appleIdentityToken, signingKey);
-
-          const { sub, email: decodedEmail } = decoded;
-
           const userWithAppleIdCount = await User.countDocuments({
             email: decodedEmail,
             appleId: sub,
