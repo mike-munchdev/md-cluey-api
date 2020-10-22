@@ -3,6 +3,7 @@ const {
   comparePassword,
   validateToken,
   appleAuthKeys,
+  decodeAppleToken,
 } = require('../utils/authentication');
 const { ERRORS } = require('../constants/errors');
 const { convertError } = require('../utils/errors');
@@ -37,9 +38,13 @@ module.exports = {
 
         let user;
         if (appleId || appleAuthToken || appleIdentityToken) {
+          const { decodedEmail, sub } = await decodeAppleToken(
+            appleIdentityToken
+          );
+
           user = await User.findOne({
-            email: email,
-            appleId,
+            email: decodedEmail,
+            appleId: sub,
           }).populate(companyResponsesPopulate);
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
