@@ -17,8 +17,8 @@ const {
   createCompanyResponsesResponse,
   createFriendshipsResponse,
   createFriendshipResponse,
-
   createUserLiteResponse,
+  createAuthenticationResponse,
 } = require('../utils/responses');
 const { RESPONSES } = require('../constants/responses');
 const { omit } = require('lodash');
@@ -33,7 +33,11 @@ const Friends = require('../models/Friends');
 const { friendshipEnum, notificationTypeEnum } = require('../utils/enum');
 const { updateFriendshipRequest } = require('../utils/friend');
 const { addNotification } = require('../utils/notification');
-const { validateToken, decodeAppleToken } = require('../utils/authentication');
+const {
+  validateToken,
+  decodeAppleToken,
+  generateToken,
+} = require('../utils/authentication');
 
 module.exports = {
   Query: {
@@ -353,18 +357,22 @@ module.exports = {
             ? true
             : false;
 
+        const confirmToken =
+          facebookId || googleId || appleId
+            ? null
+            : randomstring.generate({
+                length: 6,
+                charset: 'alphanumeric',
+              });
+
         // TODO: add user to database as inactive
         const user = await User.create({
           ...input,
           email: saveEmail,
+          username: saveEmail,
+          mustResetPassword: facebookId || googleId || appleId ? false : true,
           isActive,
-          confirmToken:
-            facebookId || googleId || appleId
-              ? null
-              : randomstring.generate({
-                  length: 6,
-                  charset: 'alphanumeric',
-                }),
+          confirmToken,
         });
 
         if (!facebookId && !googleId && !appleId) {
@@ -428,25 +436,40 @@ module.exports = {
       }
     },
 
-    activateUserAccount: async (parent, { confirmToken }, {}) => {
+    activateUserAccount: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
-
+        const { confirmToken, email } = input;
+        console.log('confirmToken, email ', confirmToken, email);
         // TODO: check for confirm token
-        const user = await User.findOne({ confirmToken });
+        let user = await User.findOne({ email });
+
         if (!user) throw new Error(ERRORS.USER.CONFIRM_TOKEN_NOT_FOUND);
+        if (user.confirmToken !== confirmToken)
+          throw new Error(ERRORS.USER.CONFIRM_TOKEN_NOT_FOUND);
 
         user.isActive = true;
         user.confirmToken = null;
+        user.mustResetPassword = true;
 
         await user.save();
 
-        return createGeneralResponse({
+        user = await User.findById(user.id).populate(companyResponsesPopulate);
+
+        const token = await generateToken({
+          user: {
+            id: user.id,
+          },
+          type: 'User',
+        });
+
+        return createAuthenticationResponse({
           ok: true,
-          message: RESPONSES.USER.ACCOUNT_ACTIVATED,
+          token,
+          user: user.transform(),
         });
       } catch (error) {
-        return createGeneralResponse({
+        return createAuthenticationResponse({
           ok: false,
           error: convertError(error),
         });

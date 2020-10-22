@@ -1,8 +1,6 @@
 const axios = require('axios').default;
 const {
   comparePassword,
-  validateToken,
-  appleAuthKeys,
   decodeAppleToken,
 } = require('../utils/authentication');
 const { ERRORS } = require('../constants/errors');
