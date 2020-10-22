@@ -350,6 +350,7 @@ module.exports = {
           saveEmail = email;
         }
 
+        if (!saveEmail) throw new Error('Could not create user account.');
         console.log('saveEmail', saveEmail);
         isActive =
           (appleId && appleAuthToken && appleIdentityToken) ||
@@ -364,7 +365,7 @@ module.exports = {
           email: saveEmail,
           isActive,
           confirmToken:
-            facebookId || googleId
+            facebookId || googleId || appleId
               ? null
               : randomstring.generate({
                   length: 6,
@@ -386,6 +387,7 @@ module.exports = {
 
           await sendMail(mail);
         }
+
         return createGeneralResponse({
           ok: true,
           message,
