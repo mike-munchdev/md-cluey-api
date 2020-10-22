@@ -35,7 +35,7 @@ module.exports = {
     ) => {
       try {
         await connectDatabase();
-
+        console.log('getUserToken');
         let user;
         if (appleId || appleAuthToken || appleIdentityToken) {
           const { decodedEmail, sub } = await decodeAppleToken(
