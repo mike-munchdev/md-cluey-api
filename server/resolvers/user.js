@@ -322,12 +322,6 @@ module.exports = {
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
         let saveEmail;
         if (appleId || appleIdentityToken) {
-          console.log(
-            'calling decodeAppleToken',
-            appleId,
-            appleIdentityToken,
-            appleAuthToken
-          );
           const { decodedEmail, sub } = await decodeAppleToken(
             appleIdentityToken
           );
@@ -351,7 +345,7 @@ module.exports = {
         }
 
         if (!saveEmail) throw new Error('Could not create user account.');
-        console.log('saveEmail', saveEmail);
+
         isActive =
           (appleId && appleAuthToken && appleIdentityToken) ||
           (facebookId && facebookAuthToken) ||

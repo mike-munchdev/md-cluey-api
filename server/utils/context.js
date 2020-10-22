@@ -20,7 +20,7 @@ module.exports = async (args) => {
         // admin pass-through
         if (token === process.env.PASSTHROUGH_TOKEN)
           return { req, res: args.res, isAdmin: true };
-        // console.log('arr', arr[1]);
+
         if (arr.length)
           if (
             arr[1].includes('getUserToken(') ||
@@ -53,7 +53,6 @@ module.exports = async (args) => {
         throw new SchemaError('Schema invalid');
       }
     } else {
-      // console.log('web socket request');
       const isAdmin = args.connection.context.isAdmin;
       const user = args.connection.context.user;
       return { user, isAdmin };
