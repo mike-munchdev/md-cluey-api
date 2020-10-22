@@ -1,5 +1,5 @@
-const { withFilter } = require('apollo-server-express');
 const { ObjectId } = require('mongoose').Types;
+const jwksClient = require('jwks-rsa');
 const randomstring = require('randomstring');
 const { ERRORS } = require('../constants/errors');
 const { MESSAGES } = require('../constants/messages');
@@ -16,13 +16,12 @@ const {
   createCompanyResponseResponse,
   createCompanyResponsesResponse,
   createFriendshipsResponse,
-  createUsersResponse,
   createFriendshipResponse,
 
   createUserLiteResponse,
 } = require('../utils/responses');
 const { RESPONSES } = require('../constants/responses');
-const { pick, omit } = require('lodash');
+const { omit } = require('lodash');
 const Company = require('../models/Company');
 const { sendMail } = require('../utils/mail');
 const { isUserNameUnique } = require('../utils/users');
@@ -30,17 +29,15 @@ const {
   companyResponsesPopulate,
   friendshipPopulate,
 } = require('../utils/populate');
-const { connect } = require('mongoose');
 const Friends = require('../models/Friends');
-const { request } = require('express');
 const { friendshipEnum, notificationTypeEnum } = require('../utils/enum');
 const { updateFriendshipRequest } = require('../utils/friend');
 const { addNotification } = require('../utils/notification');
-const { db } = require('../models/Company');
+const { validateToken } = require('../utils/authentication');
 
 module.exports = {
   Query: {
-    getUserFriends: async (parent, { userId }, { isAdmin }) => {
+    getUserFriends: async (parent, { userId }, {}) => {
       try {
         await connectDatabase();
         const user = await User.findById(userId, 'friends');
@@ -66,7 +63,7 @@ module.exports = {
     getPublicAndActiveNonFriendsByName: async (
       parent,
       { exact, name },
-      { isAdmin, user }
+      { user }
     ) => {
       try {
         await connectDatabase();
@@ -79,10 +76,6 @@ module.exports = {
           status: friendshipEnum[2],
         }).populate(friendshipPopulate);
 
-        const friendIds = friendships.map((f) => {
-          const friend = f.requester.id === user.id ? f.recipient : f.requester;
-          return friend.id;
-        });
         const orQuery = exact
           ? [
               { username: name },
@@ -135,7 +128,7 @@ module.exports = {
         });
       }
     },
-    getUserById: async (parent, { userId }, { isAdmin }) => {
+    getUserById: async (parent, { userId }, {}) => {
       try {
         await connectDatabase();
 
@@ -155,7 +148,7 @@ module.exports = {
         });
       }
     },
-    getUserCompanyResponses: async (parent, { userId }, { isAdmin }) => {
+    getUserCompanyResponses: async (parent, { userId }, {}) => {
       try {
         await connectDatabase();
 
@@ -179,7 +172,7 @@ module.exports = {
     },
   },
   Mutation: {
-    updateUserPassword: async (parent, { input }, { isAdmin }) => {
+    updateUserPassword: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
         // TODO: check for accounts in db for this user/code
@@ -208,7 +201,7 @@ module.exports = {
         });
       }
     },
-    resetPassword: async (parent, { email }, { user, isAdmin }) => {
+    resetPassword: async (parent, { email }, {}) => {
       try {
         await connectDatabase();
         // TODO: check for accounts in db for this user/code
@@ -255,7 +248,7 @@ module.exports = {
       }
     },
 
-    createUser: async (parent, { input }, { isAdmin }) => {
+    createUser: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
 
@@ -275,7 +268,7 @@ module.exports = {
       }
     },
 
-    updateUser: async (parent, { input }, { isAdmin }) => {
+    updateUser: async (parent, { input }, {}) => {
       try {
         const { userId, username } = input;
 
@@ -311,14 +304,11 @@ module.exports = {
       }
     },
 
-    userSignup: async (parent, { input }, { isAdmin }) => {
+    userSignup: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
         const {
-          firstName,
-          lastName,
           email,
-          password,
           facebookId,
           facebookAuthToken,
           googleId,
@@ -327,13 +317,31 @@ module.exports = {
           appleAuthToken,
           appleIdentityToken,
         } = input;
-
+        console.log('userSignup');
         let isActive = false;
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
         if (appleId) {
+          const client = jwksClient({
+            strictSsl: true, // Default value
+            jwksUri: process.env.APPLE_RSA_KEYS_URL,
+            timeout: 30000, // Defaults to 30s
+          });
+
+          const key = await client.getSigningKeyAsync(
+            process.env.APPLE_RSA_KEY
+          );
+
+          const signingKey = key.getPublicKey();
+
+          // Now I can use this to configure my Express or Hapi middleware
+
+          const decoded = await validateToken(appleIdentityToken, signingKey);
+
+          const { sub, email: decodedEmail } = decoded;
+
           const userWithAppleIdCount = await User.countDocuments({
-            email,
-            appleId,
+            email: decodedEmail,
+            appleId: sub,
           });
           if (userWithAppleIdCount !== 0)
             throw new Error(ERRORS.USER.ACCOUNT_EMAIL_TAKEN);
@@ -391,7 +399,7 @@ module.exports = {
       }
     },
 
-    addPushToken: async (parent, { input }, { isAdmin, user }) => {
+    addPushToken: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
 
@@ -425,7 +433,7 @@ module.exports = {
       }
     },
 
-    activateUserAccount: async (parent, { confirmToken }, { isAdmin }) => {
+    activateUserAccount: async (parent, { confirmToken }, {}) => {
       try {
         await connectDatabase();
 
@@ -450,7 +458,7 @@ module.exports = {
       }
     },
 
-    updateCompanyResponseForUser: async (parent, { input }, { isAdmin }) => {
+    updateCompanyResponseForUser: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
         const { userId, companyId, response } = input;
@@ -495,7 +503,7 @@ module.exports = {
       }
     },
 
-    deleteFriendshipById: async (parent, { friendshipId }, { isAdmin }) => {
+    deleteFriendshipById: async (parent, { friendshipId }, {}) => {
       try {
         await connectDatabase();
 
@@ -519,7 +527,7 @@ module.exports = {
       }
     },
 
-    acceptFriendship: async (parent, { friendshipId }, { isAdmin }) => {
+    acceptFriendship: async (parent, { friendshipId }, {}) => {
       try {
         await connectDatabase();
 
@@ -554,7 +562,7 @@ module.exports = {
         });
       }
     },
-    rejectFriendship: async (parent, { friendshipId }, { isAdmin }) => {
+    rejectFriendship: async (parent, { friendshipId }, {}) => {
       try {
         await connectDatabase();
 
@@ -589,7 +597,7 @@ module.exports = {
         });
       }
     },
-    requestFriendship: async (parent, { input }, { isAdmin }) => {
+    requestFriendship: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
         const { requestorId, recipientId } = input;

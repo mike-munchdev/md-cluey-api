@@ -14,7 +14,6 @@ const {
   companyResponse,
   companyResponsesPopulate,
 } = require('../utils/populate');
-const { assignWith } = require('lodash');
 
 module.exports = {
   Query: {
