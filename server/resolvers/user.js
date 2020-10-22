@@ -322,9 +322,11 @@ module.exports = {
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
 
         if (appleId || appleIdentityToken) {
+          console.log('calling decodeAppleToken');
           const { decodedEmail, sub } = await decodeAppleToken(
             appleIdentityToken
           );
+          console.log('userWithAppleIdCount');
           const userWithAppleIdCount = await User.countDocuments({
             email: decodedEmail,
             appleId: sub,
