@@ -27,6 +27,10 @@ module.exports = async (args) => {
             arr[1].includes('userSignup(') ||
             arr[1].includes('activateUserAccount(') ||
             arr[1].includes('resetPassword(') ||
+            arr[1].includes('getCategories ') ||
+            arr[1].includes('getProductTypesByCategory(') ||
+            arr[1].includes('getCompaniesByProductType(') ||
+            arr[1].includes('getCompanyById(') ||
             arr[0].includes('query IntrospectionQuery {')
           ) {
             return { req, res: args.res };
