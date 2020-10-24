@@ -19,7 +19,7 @@ module.exports.decodeAppleToken = (token) => {
       const signingKey = key.getPublicKey();
 
       const decoded = await this.validateToken(token, signingKey);
-
+      console.log('decoded', decoded);
       const { sub, email: decodedEmail } = decoded;
       resolve({ sub, decodedEmail });
     } catch (error) {
