@@ -33,12 +33,25 @@ module.exports = {
     ) => {
       try {
         await connectDatabase();
-
+        console.log(
+          'input',
+          email,
+          password,
+          facebookId,
+          facebookAuthToken,
+          googleAuthToken,
+          googleId,
+          appleId,
+          appleAuthToken,
+          appleIdentityToken
+        );
         let user;
         if (appleId || appleAuthToken || appleIdentityToken) {
           const { decodedEmail, sub } = await decodeAppleToken(
             appleIdentityToken
           );
+          console.log('decodedEmail', decodedEmail);
+          console.log('sub', sub);
 
           user = await User.findOne({
             email: decodedEmail,
