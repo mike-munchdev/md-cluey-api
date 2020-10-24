@@ -322,6 +322,14 @@ module.exports = {
           appleIdentityToken,
         } = input;
 
+        console.log(email);
+        console.log(facebookId);
+        console.log(facebookAuthToken);
+        console.log(googleId);
+        console.log(googleAuthToken);
+        console.log(appleId);
+        console.log(appleAuthToken);
+        console.log(appleIdentityToken);
         let isActive = false;
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
         let saveEmail;
