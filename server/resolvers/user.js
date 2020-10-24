@@ -322,7 +322,7 @@ module.exports = {
           appleIdentityToken,
         } = input;
 
-        console.log(input);
+        console.log('input', input);
 
         let isActive = false;
         let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
