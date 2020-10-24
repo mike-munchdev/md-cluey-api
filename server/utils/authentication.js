@@ -4,6 +4,7 @@ const jwksClient = require('jwks-rsa');
 const User = require('../models/User');
 const connectDatabase = require('../models/connectDatabase');
 const { companyResponsesPopulate } = require('./populate');
+const { default: Bugsnag } = require('@bugsnag/js');
 
 module.exports.decodeAppleToken = (token) => {
   return new Promise(async (resolve, reject) => {
@@ -23,6 +24,7 @@ module.exports.decodeAppleToken = (token) => {
       const { sub, email: decodedEmail } = decoded;
       resolve({ sub, decodedEmail });
     } catch (error) {
+      Bugsnag.notify(error);
       resolve(error);
     }
   });
@@ -34,6 +36,7 @@ module.exports.validateToken = (token, secret) => {
 
       resolve(decoded);
     } catch (e) {
+      Bugsnag.notify(e);
       reject(e);
     }
   });
@@ -53,6 +56,7 @@ module.exports.findUserByToken = (decoded) => {
         throw new Error('Malformed token');
       }
     } catch (e) {
+      Bugsnag.notify(e);
       reject(e);
     }
   });
@@ -75,6 +79,7 @@ module.exports.generateToken = ({ user, type }) => {
 
       resolve(token);
     } catch (e) {
+      Bugsnag.notify(e);
       reject(e);
     }
   });
@@ -91,6 +96,7 @@ module.exports.comparePassword = ({ password, candidatePassword }) => {
 
       resolve(isMatch);
     } catch (error) {
+      Bugsnag.notify(error);
       reject(error);
     }
   });
@@ -102,6 +108,7 @@ module.exports.hashPassword = async (password) => {
     const hash = await bcrypt.hash(password, salt);
     return hash;
   } catch (error) {
+    Bugsnag.notify(error);
     console.log('hashPassword error', error);
   }
 };
