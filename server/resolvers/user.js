@@ -330,6 +330,8 @@ module.exports = {
             appleIdentityToken
           );
 
+          console.log('decodedEmail', decodedEmail);
+          console.log('sub', sub);
           const userWithAppleIdCount = await User.countDocuments({
             email: decodedEmail,
             appleId: sub,
@@ -348,6 +350,7 @@ module.exports = {
           saveEmail = email;
         }
 
+        console.log('saveEmail', saveEmail);
         if (!saveEmail) throw new Error('Could not create user account.');
 
         isActive =
