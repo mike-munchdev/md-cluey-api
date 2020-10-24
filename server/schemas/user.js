@@ -15,6 +15,7 @@ const typeDefs = gql`
     gender: String
     googleId: String
     facebookId: String
+    appleId: String
     friends: [String!]
     companyResponses: [ResponseToCompany!]
     confirmToken: String
