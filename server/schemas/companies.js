@@ -14,23 +14,26 @@ const typeDefs = gql`
     isActive: Boolean
   }
 
-  type CompaniesResponse {
+  type CompaniesResolverResponse {
     ok: Boolean!
     companies: [Company!]
     error: Error
     searchText: String
   }
-  type CompanyResponse {
+  type CompanyResolverResponse {
     ok: Boolean!
     company: Company
     error: Error
   }
 
   type Query {
-    getCompaniesByName(name: String!, exact: Boolean): CompaniesResponse!
-    getCompaniesByCategory(id: String!): CompaniesResponse!
-    getCompaniesByProductType(id: String!): CompaniesResponse!
-    getCompanyById(id: String!): CompanyResponse!
+    getCompaniesByName(
+      name: String!
+      exact: Boolean
+    ): CompaniesResolverResponse!
+    getCompaniesByCategory(id: String!): CompaniesResolverResponse!
+    getCompaniesByProductType(id: String!): CompaniesResolverResponse!
+    getCompanyById(id: String!): CompanyResolverResponse!
   }
 `;
 

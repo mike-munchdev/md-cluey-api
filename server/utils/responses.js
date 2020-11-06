@@ -187,3 +187,16 @@ module.exports.createCompanyResponsesResponse = ({
     error,
   };
 };
+
+module.exports.createSystemNotificationsResponse = ({
+  ok,
+  systemNotifications = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    systemNotifications,
+    error,
+  };
+};

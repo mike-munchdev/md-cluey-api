@@ -2,6 +2,7 @@ const {
   AuthenticationError,
   SchemaError,
   ForbiddenError,
+  ApolloError,
 } = require('apollo-server-express');
 const { validateToken, findUserByToken } = require('./authentication');
 
@@ -16,6 +17,12 @@ module.exports = async (args) => {
         const arr = query.split('\n');
         const req = args.req;
         const token = req.header('x-auth');
+        const version = req.header('version');
+
+        if (version !== process.env.API_VERSION)
+          throw new AuthenticationError(
+            `Version mismatch. Please update your application. Your Version:(${version}). Current Version:(${process.env.API_VERSION})`
+          );
 
         // admin pass-through
         if (token === process.env.PASSTHROUGH_TOKEN)
@@ -62,7 +69,7 @@ module.exports = async (args) => {
       return { user, isAdmin };
     }
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     throw e;
   }
 };

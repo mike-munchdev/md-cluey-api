@@ -61,7 +61,7 @@ const resolvers = require('./server/resolvers/index');
     playground,
     context,
     formatError: (err) => {
-      console.log('graphql: error', err);
+      console.log('formatError: graphql: error', err);
       return err;
     },
     subscriptions: {

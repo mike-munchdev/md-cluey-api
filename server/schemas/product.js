@@ -14,14 +14,14 @@ const typeDefs = gql`
     name: String!
   }
 
-  type ProductsResponse {
+  type ProductsResolverResponse {
     ok: Boolean!
     products: [Product!]
     error: Error
     searchText: String
   }
   type Query {
-    getProductsByName(name: String!, exact: Boolean): ProductsResponse
+    getProductsByName(name: String!, exact: Boolean): ProductsResolverResponse
   }
 `;
 

@@ -14,14 +14,13 @@ module.exports.decodeAppleToken = (token) => {
         jwksUri: process.env.APPLE_RSA_KEYS_URL,
         timeout: 30000, // Defaults to 30s
       });
-      console.log('process.env.APPLE_RSA_KEY', process.env.APPLE_RSA_KEY);
 
       const key = await client.getSigningKeyAsync(process.env.APPLE_RSA_KEY);
 
       const signingKey = key.getPublicKey();
 
       const decoded = await this.validateToken(token, signingKey);
-      console.log('decoded', decoded);
+
       const { sub, email: decodedEmail } = decoded;
       resolve({ sub, decodedEmail });
     } catch (error) {

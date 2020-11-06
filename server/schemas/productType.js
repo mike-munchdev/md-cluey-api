@@ -8,14 +8,14 @@ const typeDefs = gql`
     isActive: Boolean
   }
 
-  type ProductTypesResponse {
+  type ProductTypesResolverResponse {
     ok: Boolean!
     productTypes: [ProductType!]
     error: Error
     searchText: String
   }
   type Query {
-    getProductTypesByCategory(id: String!): ProductTypesResponse
+    getProductTypesByCategory(id: String!): ProductTypesResolverResponse
   }
 `;
 

@@ -3,16 +3,16 @@ const { gql } = require('apollo-server-express');
 // Construct a schema, using GraphQL schema language
 const typeDefs = gql`
   type Mutation {
-    importAll: GeneralResponse
-    importCategories: GeneralResponse
-    importProducts: GeneralResponse
-    importProductTypes: GeneralResponse
-    importParentCompanies: GeneralResponse
-    importTags: GeneralResponse
-    importCompanies: GeneralResponse
-    importLogos: GeneralResponse
-    importPoliticalContributionData: GeneralResponse
-    getMissingLogos: GeneralResponse
+    importAll: GeneralResolverResponse
+    importCategories: GeneralResolverResponse
+    importProducts: GeneralResolverResponse
+    importProductTypes: GeneralResolverResponse
+    importParentCompanies: GeneralResolverResponse
+    importTags: GeneralResolverResponse
+    importCompanies: GeneralResolverResponse
+    importLogos: GeneralResolverResponse
+    importPoliticalContributionData: GeneralResolverResponse
+    getMissingLogos: GeneralResolverResponse
   }
 `;
 

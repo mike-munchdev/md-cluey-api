@@ -1,14 +1,6 @@
-const escapeStringRegexp = require('escape-string-regexp');
-const { comparePassword } = require('../utils/authentication');
-const { ERRORS } = require('../constants/errors');
 const { convertError } = require('../utils/errors');
-const { generateToken } = require('../utils/authentication');
 const connectDatabase = require('../models/connectDatabase');
-const {
-  createAuthenticationResponse,
-  createProductsResponse,
-} = require('../utils/responses');
-const User = require('../models/User');
+const { createProductsResponse } = require('../utils/responses');
 const Product = require('../models/Product');
 
 module.exports = {

@@ -9,13 +9,13 @@ const typeDefs = gql`
     isActive: Boolean
   }
 
-  type CategoriesResponse {
+  type CategoriesResolverResponse {
     ok: Boolean!
     categories: [Category!]
     error: Error
   }
   type Query {
-    getCategories: CategoriesResponse
+    getCategories: CategoriesResolverResponse
   }
 `;
 

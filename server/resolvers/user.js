@@ -41,25 +41,22 @@ const {
 
 module.exports = {
   Query: {
-    getUserFriends: async (parent, { userId }, {}) => {
+    getUserById: async (parent, { userId }, {}) => {
       try {
         await connectDatabase();
-        const user = await User.findById(userId, 'friends');
+
+        // TODO: check for accounts in db for this user/code
+        const user = await User.findById(userId);
 
         if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
-        const friendships = await Friends.find({
-          _id: { $in: user.friends },
-          status: friendshipEnum[2],
-        }).populate(friendshipPopulate);
-
-        return createFriendshipsResponse({
+        return createUserResponse({
           ok: true,
-          friendships: friendships.map((f) => f.transform()),
+          user,
         });
       } catch (error) {
-        return createFriendshipsResponse({
-          ok: true,
+        return createUserResponse({
+          ok: false,
           error: convertError(error),
         });
       }
@@ -67,18 +64,26 @@ module.exports = {
     getPublicAndActiveNonFriendsByName: async (
       parent,
       { exact, name },
-      { user }
+      { isAdmin, user }
     ) => {
       try {
         await connectDatabase();
         let users;
 
-        const me = await User.findById(user.id, 'friends');
-
-        const friendships = await Friends.find({
-          _id: { $in: me.friends },
-          status: friendshipEnum[2],
-        }).populate(friendshipPopulate);
+        // const me = await User.findById(user.id, 'friends');
+        // console.log('getPublicAndActiveNonFriendsByName: me', me);
+        // const friendships = await Friends.find({
+        //   $or: [{ requester: user.id }, { recipient: user.id }],
+        //   status: friendshipEnum[2],
+        // });
+        // console.log(
+        //   'getPublicAndActiveNonFriendsByName friendships',
+        //   friendships
+        // );
+        // const friendIds = friendships.map((f) => {
+        //   const friend = f.requester.id === user.id ? f.recipient : f.requester;
+        //   return friend.id;
+        // });
 
         const orQuery = exact
           ? [
@@ -120,55 +125,20 @@ module.exports = {
               : 50
           );
 
+        const usersWithoutMe = users
+          .map((u) => {
+            u.id = u._id;
+            return u;
+          })
+          .filter((u) => u.id.toString() !== user._id.toString());
+
         return createUserLiteResponse({
           ok: true,
-          users: users.map((u) => u.transform()),
+          users: usersWithoutMe,
           searchText: name,
         });
       } catch (error) {
         return createUserLiteResponse({
-          ok: true,
-          error: convertError(error),
-        });
-      }
-    },
-    getUserById: async (parent, { userId }, {}) => {
-      try {
-        await connectDatabase();
-
-        // TODO: check for accounts in db for this user/code
-        const user = await User.findById(userId);
-
-        if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
-
-        return createUserResponse({
-          ok: true,
-          user,
-        });
-      } catch (error) {
-        return createUserResponse({
-          ok: false,
-          error: convertError(error),
-        });
-      }
-    },
-    getUserCompanyResponses: async (parent, { userId }, {}) => {
-      try {
-        await connectDatabase();
-
-        // TODO: check for accounts in db for this user/code
-        const user = await User.findById(userId).populate(
-          companyResponsesPopulate
-        );
-
-        if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
-
-        return createCompanyResponsesResponse({
-          ok: true,
-          companyResponses: user.companyResponses.map((c) => c.transform()),
-        });
-      } catch (error) {
-        return createCompanyResponsesResponse({
           ok: false,
           error: convertError(error),
         });
@@ -251,7 +221,6 @@ module.exports = {
         });
       }
     },
-
     createUser: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
@@ -325,7 +294,7 @@ module.exports = {
         console.log('input', input);
 
         let isActive = false;
-        let message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
+        let message = '';
         let saveEmail;
         if (appleId || appleIdentityToken) {
           const { decodedEmail, sub } = await decodeAppleToken(
@@ -393,6 +362,8 @@ module.exports = {
           });
 
           await sendMail(mail);
+        } else {
+          message = RESPONSES.USER.SIGNUP_SUCCESSFUL_SOCIAL;
         }
 
         return createGeneralResponse({
@@ -475,198 +446,6 @@ module.exports = {
         });
       } catch (error) {
         return createAuthenticationResponse({
-          ok: false,
-          error: convertError(error),
-        });
-      }
-    },
-
-    updateCompanyResponseForUser: async (parent, { input }, {}) => {
-      try {
-        await connectDatabase();
-        const { userId, companyId, response } = input;
-
-        let user = await User.findById(userId).populate(
-          companyResponsesPopulate
-        );
-
-        if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
-        let company = await Company.findById(companyId);
-
-        if (!company)
-          throw new Error(ERRORS.COMPANY.NOT_FOUND_WITH_PROVIDED_INFO);
-
-        const existingResponseIndex = user.companyResponses.findIndex((r) => {
-          return r.company._id.toString() === company._id.toString();
-        });
-
-        let returnIndex = existingResponseIndex;
-        if (existingResponseIndex >= 0) {
-          user.companyResponses[existingResponseIndex].response = response;
-        } else {
-          user.companyResponses.push({ company: company._id, response });
-          returnIndex = user.companyResponses.length - 1;
-        }
-
-        await user.save();
-
-        const returnUser = await User.findById(userId).populate(
-          companyResponsesPopulate
-        );
-
-        return createCompanyResponseResponse({
-          ok: true,
-          companyResponse: returnUser.companyResponses[returnIndex].transform(),
-        });
-      } catch (error) {
-        return createCompanyResponseResponse({
-          ok: false,
-          error: convertError(error),
-        });
-      }
-    },
-
-    deleteFriendshipById: async (parent, { friendshipId }, {}) => {
-      try {
-        await connectDatabase();
-
-        // delete friendship record
-        await Friends.findByIdAndDelete(friendshipId);
-
-        // remove all instances of this from the users
-        await User.updateMany({}, { $pull: { friends: friendshipId } });
-        // remove all instances of this from the notifications
-        await SystemNotification.findOneAndDelete({}, { linkId: friendshipId });
-
-        return createGeneralResponse({
-          ok: true,
-          message: RESPONSES.FRIENDSHIP.REQUEST_DELETED,
-        });
-      } catch (error) {
-        return createGeneralResponse({
-          ok: false,
-          error: convertError(error),
-        });
-      }
-    },
-
-    acceptFriendship: async (parent, { friendshipId }, {}) => {
-      try {
-        await connectDatabase();
-
-        let existingFriendship = await Friends.findById(friendshipId).populate(
-          friendshipPopulate
-        );
-
-        if (!existingFriendship)
-          throw new Error(ERRORS.FRIENDSHIP.NO_FRIENDSHIP_REQUEST_EXISTS);
-
-        existingFriendship = await updateFriendshipRequest(
-          existingFriendship,
-          friendshipEnum[2]
-        );
-
-        // add notification
-        await addNotification(
-          existingFriendship.requester,
-          `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
-          notificationTypeEnum[0],
-          existingFriendship._id
-        );
-
-        return createFriendshipResponse({
-          ok: true,
-          friendship: existingFriendship.transform(),
-        });
-      } catch (error) {
-        return createFriendshipResponse({
-          ok: false,
-          error: convertError(error),
-        });
-      }
-    },
-    rejectFriendship: async (parent, { friendshipId }, {}) => {
-      try {
-        await connectDatabase();
-
-        let existingFriendship = await Friends.findById(friendshipId).populate(
-          friendshipPopulate
-        );
-
-        if (!existingFriendship)
-          throw new Error(ERRORS.FRIENDSHIP.NO_FRIENDSHIP_REQUEST_EXISTS);
-
-        existingFriendship = await updateFriendshipRequest(
-          existingFriendship,
-          friendshipEnum[3]
-        );
-
-        // add notification
-        await addNotification(
-          existingFriendship.requester,
-          `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
-          notificationTypeEnum[0],
-          existingFriendship._id
-        );
-
-        return createFriendshipResponse({
-          ok: true,
-          friendship: existingFriendship.transform(),
-        });
-      } catch (error) {
-        return createFriendshipResponse({
-          ok: false,
-          error: convertError(error),
-        });
-      }
-    },
-    requestFriendship: async (parent, { input }, {}) => {
-      try {
-        await connectDatabase();
-        const { requestorId, recipientId } = input;
-
-        const existingFriendship = await Friends.findOne({
-          $or: [
-            { requester: requestorId, recipient: recipientId },
-            { requester: recipientId, recipient: requestorId },
-          ],
-        });
-
-        if (existingFriendship)
-          throw new Error(ERRORS.FRIENDSHIP.EXISTING_FRIENDSHIP_REQUEST);
-
-        const friendship = new Friends();
-        friendship.requester = requestorId;
-        friendship.recipient = recipientId;
-        friendship.status = friendshipEnum[0];
-
-        await friendship.save();
-
-        await User.updateMany(
-          {
-            $or: [{ _id: requestorId }, { _id: recipientId }],
-          },
-          { $push: { friends: friendship } }
-        );
-
-        const user = await User.findById(requestorId).populate(
-          companyResponsesPopulate
-        );
-        // add notification
-        const notification = new SystemNotification();
-
-        notification.user = recipientId;
-        notification.message = `${user.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_PENDING}`;
-        notification.notificationType = notificationTypeEnum[0];
-        notification.linkId = friendship._id;
-        await notification.save();
-
-        return createUserResponse({
-          ok: true,
-          user: user.transform(),
-        });
-      } catch (error) {
-        return createUserResponse({
           ok: false,
           error: convertError(error),
         });

@@ -7,7 +7,7 @@ const typeDefs = gql`
     to: String!
   }
   type Mutation {
-    sendMail(input: MailInput!): GeneralResponse
+    sendMail(input: MailInput!): GeneralResolverResponse
   }
 `;
 
