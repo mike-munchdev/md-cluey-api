@@ -69,7 +69,6 @@ module.exports = async (args) => {
       return { user, isAdmin };
     }
   } catch (e) {
-    // console.log(e);
     throw e;
   }
 };

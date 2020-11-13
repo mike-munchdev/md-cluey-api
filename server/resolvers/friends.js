@@ -1,7 +1,7 @@
 const { ERRORS } = require('../constants/errors');
 const { MESSAGES } = require('../constants/messages');
 const { convertError } = require('../utils/errors');
-
+const { Types } = require('mongoose');
 const User = require('../models/User');
 
 const SystemNotification = require('../models/SystemNotification');
@@ -35,8 +35,6 @@ module.exports = {
           status: friendshipEnum[2],
         }).populate(friendshipPopulate);
 
-        console.log('friendships', friendships);
-
         return createFriendshipsResponse({
           ok: true,
           friendships: friendships.map((f) => f.transform()),
@@ -54,8 +52,18 @@ module.exports = {
 
         const friendship = await Friends.findOne({
           $or: [
-            { $and: [{ requester: userId1 }, { recipient: userId2 }] },
-            { $and: [{ requester: userId2 }, { recipient: userId1 }] },
+            {
+              $and: [
+                { requester: new Types.ObjectId(userId1) },
+                { recipient: new Types.ObjectId(userId2) },
+              ],
+            },
+            {
+              $and: [
+                { requester: new Types.ObjectId(userId2) },
+                { recipient: new Types.ObjectId(userId1) },
+              ],
+            },
           ],
         }).populate(friendshipPopulate);
 
@@ -72,33 +80,35 @@ module.exports = {
     },
   },
   Mutation: {
-    deleteFriendshipById: async (parent, { friendshipId }, {}) => {
+    deleteFriendshipById: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
 
+        const { friendshipId } = input;
         // delete friendship record
+
         await Friends.findByIdAndDelete(friendshipId);
 
-        // remove all instances of this from the users
-        await User.updateMany({}, { $pull: { friends: friendshipId } });
         // remove all instances of this from the notifications
-        await SystemNotification.findOneAndDelete({}, { linkId: friendshipId });
 
-        return createGeneralResponse({
+        await SystemNotification.deleteMany({ linkId: friendshipId });
+
+        return createFriendshipResponse({
           ok: true,
-          message: RESPONSES.FRIENDSHIP.REQUEST_DELETED,
+          friendship: { id: friendshipId, status: '' },
         });
       } catch (error) {
-        return createGeneralResponse({
+        return createFriendshipResponse({
           ok: false,
           error: convertError(error),
         });
       }
     },
-    acceptFriendship: async (parent, { friendshipId }, {}) => {
+    acceptFriendship: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
 
+        const { friendshipId, notificationId } = input;
         let existingFriendship = await Friends.findById(friendshipId).populate(
           friendshipPopulate
         );
@@ -111,16 +121,27 @@ module.exports = {
           friendshipEnum[2]
         );
 
+        let notification;
+        // update notification to read if exists
+        if (notificationId) {
+          notification = await SystemNotification.findOneAndUpdate(
+            { _id: notificationId },
+            { isRead: true },
+            { new: true }
+          );
+        }
+
         // add notification
         await addNotification(
           existingFriendship.requester,
           `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
-          notificationTypeEnum[0],
+          notificationTypeEnum[1],
           existingFriendship._id
         );
 
         return createFriendshipResponse({
           ok: true,
+          notification: notification ? notification.transform() : null,
           friendship: existingFriendship.transform(),
         });
       } catch (error) {
@@ -130,10 +151,11 @@ module.exports = {
         });
       }
     },
-    rejectFriendship: async (parent, { friendshipId }, {}) => {
+    rejectFriendship: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
 
+        const { friendshipId, notificationId } = input;
         let existingFriendship = await Friends.findById(friendshipId).populate(
           friendshipPopulate
         );
@@ -146,6 +168,16 @@ module.exports = {
           friendshipEnum[3]
         );
 
+        let notification;
+        // update notification to read if exists
+        if (notificationId) {
+          notification = await SystemNotification.findOneAndUpdate(
+            { _id: notificationId },
+            { isRead: true },
+            { new: true }
+          );
+        }
+
         // add notification
         await addNotification(
           existingFriendship.requester,
@@ -156,6 +188,7 @@ module.exports = {
 
         return createFriendshipResponse({
           ok: true,
+          notification: notification ? notification.transform() : null,
           friendship: existingFriendship.transform(),
         });
       } catch (error) {
@@ -167,7 +200,6 @@ module.exports = {
     },
     requestFriendship: async (parent, { input }, {}) => {
       try {
-        console.log('requestFriendship', input);
         await connectDatabase();
         const { requestorId, recipientId } = input;
 
@@ -181,7 +213,6 @@ module.exports = {
           ],
         });
 
-        console.log('existingFriendship', existingFriendship);
         if (existingFriendship)
           throw new Error(ERRORS.FRIENDSHIP.EXISTING_FRIENDSHIP_REQUEST);
 
@@ -194,19 +225,28 @@ module.exports = {
 
         const user = await User.findById(requestorId);
         // add notification
-        const notification = new SystemNotification();
 
-        notification.user = recipientId;
-        notification.message = `${user.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_PENDING}`;
-        notification.notificationType = notificationTypeEnum[0];
-        notification.linkId = friendship._id;
-        await notification.save();
+        const notification = await addNotification(
+          recipientId,
+          `${user.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_PENDING}`,
+          notificationTypeEnum[0],
+          friendship._id
+        );
+        // new SystemNotification();
+
+        // notification.user = recipientId;
+        // notification.message = `${user.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_PENDING}`;
+        // notification.notificationType = notificationTypeEnum[0];
+        // notification.linkId = friendship._id;
+        // await notification.save();
 
         const returnFriendship = await Friends.findById(friendship.id).populate(
           friendshipPopulate
         );
+
         return createFriendshipResponse({
           ok: true,
+          notification: notification.transform(),
           friendship: returnFriendship.transform(),
         });
       } catch (error) {

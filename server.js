@@ -61,7 +61,6 @@ const resolvers = require('./server/resolvers/index');
     playground,
     context,
     formatError: (err) => {
-      console.log('formatError: graphql: error', err);
       return err;
     },
     subscriptions: {
@@ -88,7 +87,6 @@ const resolvers = require('./server/resolvers/index');
           }
           // throw new Error('Missing auth token!');
         } catch (e) {
-          console.log('subscriptions: error', e);
           throw e;
         }
       },

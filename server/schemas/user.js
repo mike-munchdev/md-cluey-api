@@ -22,7 +22,6 @@ const typeDefs = gql`
     isActive: Boolean
     createdAt: Date!
     mustResetPassword: Boolean
-    friendCount: Int
   }
 
   type UserResolverResponse {

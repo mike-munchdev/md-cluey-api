@@ -52,6 +52,7 @@ module.exports.createUserLiteResponse = ({
 
 module.exports.createFriendshipResponse = ({
   ok,
+  notification = null,
   friendship = null,
   error = null,
   searchText = null,
@@ -59,6 +60,7 @@ module.exports.createFriendshipResponse = ({
   if (error) Bugsnag.notify(error);
   return {
     ok,
+    notification,
     friendship,
     error,
     searchText,
@@ -190,13 +192,26 @@ module.exports.createCompanyResponsesResponse = ({
 
 module.exports.createSystemNotificationsResponse = ({
   ok,
-  systemNotifications = null,
+  notifications = null,
   error = null,
 }) => {
   if (error) Bugsnag.notify(error);
   return {
     ok,
-    systemNotifications,
+    notifications,
+    error,
+  };
+};
+
+module.exports.createSystemNotificationResponse = ({
+  ok,
+  notification = null,
+  error = null,
+}) => {
+  if (error) Bugsnag.notify(error);
+  return {
+    ok,
+    notification,
     error,
   };
 };

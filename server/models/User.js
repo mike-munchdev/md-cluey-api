@@ -58,8 +58,6 @@ UserSchema.pre('save', async function () {
 UserSchema.method('transform', function () {
   let obj = this.toObject();
 
-  console.log('UserSchema transform', obj);
-
   //Rename fields
   obj.id = obj._id;
   delete obj._id;

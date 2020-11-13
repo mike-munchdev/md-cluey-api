@@ -15,7 +15,7 @@ module.exports = {
     getUserCompanyResponses: async (parent, { userId }, {}) => {
       try {
         await connectDatabase();
-        console.log('getUserCompanyResponses');
+
         // TODO: check for accounts in db for this user/code
         const companyResponses = await CompanyResponse.find({
           user: userId,
@@ -40,7 +40,7 @@ module.exports = {
     updateCompanyResponseForUser: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
-        console.log('updateCompanyResponseForUser', input);
+
         const { userId, companyId, responseId, response } = input;
 
         let companyResponse;
@@ -58,12 +58,10 @@ module.exports = {
           );
         }
 
-        console.log('companyResponse', companyResponse);
         const returnCompanyResponse = await CompanyResponse.findById(
           companyResponse.id
         ).populate(companyResponsePopulate);
 
-        console.log('returnCompanyResponse', returnCompanyResponse);
         return createCompanyResponseResponse({
           ok: true,
           companyResponse: returnCompanyResponse.transform(),

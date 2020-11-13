@@ -12,15 +12,32 @@ const typeDefs = gql`
     updatedAt: Date
   }
 
-  type SystemNotificationsResolverResponse {
+  type SystemNotificationResolverResponse {
     ok: Boolean!
-    systemNotifications: [SystemNotification!]
+    notification: SystemNotification
     error: Error
   }
+  type SystemNotificationsResolverResponse {
+    ok: Boolean!
+    notifications: [SystemNotification!]
+    error: Error
+  }
+
+  input UpdateNotificationInput {
+    notificationId: String!
+    isRead: Boolean
+  }
+
   type Query {
     getUserSystemNotifications(
       userId: String!
     ): SystemNotificationsResolverResponse!
+  }
+  type Mutation {
+    addTestNotification(userId: String!): SystemNotificationResolverResponse!
+    updateNotification(
+      input: UpdateNotificationInput!
+    ): SystemNotificationResolverResponse!
   }
 `;
 

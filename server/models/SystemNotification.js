@@ -15,7 +15,6 @@ const SystemNotificationSchema = new Schema(
 );
 
 SystemNotificationSchema.method('transform', function () {
-  console.log('SystemNotificationSchema transform');
   const obj = this.toObject();
 
   obj.id = obj._id;

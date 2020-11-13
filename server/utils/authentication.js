@@ -109,6 +109,5 @@ module.exports.hashPassword = async (password) => {
     return hash;
   } catch (error) {
     Bugsnag.notify(error);
-    console.log('hashPassword error', error);
   }
 };

@@ -15,4 +15,8 @@ module.exports.companyResponseEnum = [
   'will-not-buy-later',
 ];
 
-module.exports.notificationTypeEnum = ['friend-request'];
+module.exports.notificationTypeEnum = [
+  'friend-request',
+  'accepted-friend-request',
+  'rejected-friend-request',
+];

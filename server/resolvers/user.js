@@ -291,8 +291,6 @@ module.exports = {
           appleIdentityToken,
         } = input;
 
-        console.log('input', input);
-
         let isActive = false;
         let message = '';
         let saveEmail;
@@ -301,8 +299,6 @@ module.exports = {
             appleIdentityToken
           );
 
-          console.log('decodedEmail', decodedEmail);
-          console.log('sub', sub);
           const userWithAppleIdCount = await User.countDocuments({
             email: decodedEmail,
             appleId: sub,
@@ -321,7 +317,6 @@ module.exports = {
           saveEmail = email;
         }
 
-        console.log('saveEmail', saveEmail);
         if (!saveEmail) throw new Error('Could not create user account.');
 
         isActive =
@@ -416,7 +411,7 @@ module.exports = {
       try {
         await connectDatabase();
         const { confirmToken, email } = input;
-        console.log('confirmToken, email ', confirmToken, email);
+
         // TODO: check for confirm token
         let user = await User.findOne({ email });
 

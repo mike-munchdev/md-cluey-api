@@ -13,7 +13,7 @@ const typeDefs = gql`
     id: ID!
     requester: Friend
     recipient: Friend
-    status: String!
+    status: String
   }
 
   type FriendshipsResolverResponse {
@@ -26,6 +26,7 @@ const typeDefs = gql`
   type FriendshipResolverResponse {
     ok: Boolean!
     friendship: Friendship
+    notification: SystemNotification
     searchText: String
     error: Error
   }
@@ -35,6 +36,18 @@ const typeDefs = gql`
     recipientId: String!
   }
 
+  input AcceptFriendshipInput {
+    friendshipId: String!
+    notificationId: String
+  }
+  input RejectFriendshipInput {
+    friendshipId: String!
+    notificationId: String
+  }
+  input DeleteFriendshipByIdInput {
+    friendshipId: String!
+  }
+
   type Query {
     getUserFriends(userId: String!): FriendshipsResolverResponse!
     getFriendshipBetweenUsers(
@@ -42,13 +55,16 @@ const typeDefs = gql`
       userId2: String!
     ): FriendshipResolverResponse!
   }
+
   type Mutation {
     requestFriendship(
       input: RequestFriendshipInput!
     ): FriendshipResolverResponse!
-    deleteFriendshipById(friendshipId: String!): GeneralResolverResponse!
-    acceptFriendship(friendshipId: String!): FriendshipResolverResponse!
-    rejectFriendship(friendshipId: String!): FriendshipResolverResponse!
+    deleteFriendshipById(
+      input: DeleteFriendshipByIdInput!
+    ): FriendshipResolverResponse!
+    acceptFriendship(input: AcceptFriendshipInput!): FriendshipResolverResponse!
+    rejectFriendship(input: RejectFriendshipInput!): FriendshipResolverResponse!
   }
 `;
 

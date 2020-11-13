@@ -10,7 +10,6 @@ module.exports = {
   Mutation: {
     adminTransferCompanyResponses: async (parent, {}, { isAdmin }) => {
       try {
-        console.log('isAdmin', isAdmin);
         await connectDatabase();
 
         const users = await User.find({}, 'companyResponses').exists(

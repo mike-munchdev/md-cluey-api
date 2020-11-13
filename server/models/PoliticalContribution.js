@@ -25,7 +25,7 @@ const PoliticalContributionSchema = new Schema(
 
 PoliticalContributionSchema.method('transform', function () {
   let obj = this.toObject();
-  console.log('PoliticalContributionSchema transform');
+
   //Rename fields
   obj.id = obj._id;
 
