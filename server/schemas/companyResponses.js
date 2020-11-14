@@ -27,17 +27,32 @@ const typeDefs = gql`
     companyId: String
     response: String
   }
+  input AddCompanyResponseInput {
+    userId: String
+    companyId: String
+    response: String
+  }
 
   input DeleteCompanyResponseInput {
     responseId: String
   }
 
+  input GetCompanyResponseInput {
+    userId: String!
+    companyId: String
+  }
   type Query {
     getUserCompanyResponses(userId: String!): CompanyResponsesResolverResponse!
+    getUserCompanyResponse(
+      input: GetCompanyResponseInput!
+    ): CompanyResponseResolverResponse!
   }
 
   type Mutation {
     updateCompanyResponseForUser(
+      input: UserCompanyResponseInput!
+    ): CompanyResponseResolverResponse!
+    addCompanyResponseForUser(
       input: UserCompanyResponseInput!
     ): CompanyResponseResolverResponse!
     deleteCompanyResponse(

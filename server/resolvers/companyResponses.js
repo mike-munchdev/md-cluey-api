@@ -35,12 +35,67 @@ module.exports = {
         });
       }
     },
+    getUserCompanyResponse: async (parent, { input }, {}) => {
+      try {
+        await connectDatabase();
+
+        const { userId, companyId } = input;
+        // TODO: check for accounts in db for this user/code
+        const companyResponse = await CompanyResponse.findOne({
+          user: userId,
+          company: companyId,
+        }).populate(companyResponsePopulate);
+
+        if (!companyResponse)
+          throw new Error(ERRORS.COMPANY_RESPONSE.NO_RESPONSES_FOUND);
+
+        return createCompanyResponseResponse({
+          ok: true,
+          companyResponse: companyResponse.transform(),
+        });
+      } catch (error) {
+        return createCompanyResponseResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
   },
   Mutation: {
+    addCompanyResponseForUser: async (parent, { input }, {}) => {
+      try {
+        await connectDatabase();
+
+        const { userId, companyId, response } = input;
+
+        if (!userId || !companyId || !response)
+          throw new Error(ERRORS.COMPANY_RESPONSE.INVALID_DATA);
+
+        const companyResponse = await CompanyResponse.create({
+          user: userId,
+          company: companyId,
+          response,
+        });
+
+        const returnCompanyResponse = await CompanyResponse.findById(
+          companyResponse.id
+        ).populate(companyResponsePopulate);
+
+        return createCompanyResponseResponse({
+          ok: true,
+          companyResponse: returnCompanyResponse.transform(),
+        });
+      } catch (error) {
+        return createCompanyResponseResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
     updateCompanyResponseForUser: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
-        console.log('updateCompanyResponseForUser', input);
+
         const { userId, companyId, responseId, response } = input;
 
         let companyResponse;
@@ -56,15 +111,12 @@ module.exports = {
             { response },
             { upsert: true, new: true }
           );
-
-          console.log('companyResponse', companyResponse);
         }
 
         const returnCompanyResponse = await CompanyResponse.findById(
           companyResponse.id
         ).populate(companyResponsePopulate);
 
-        console.log('returnCompanyResponse', returnCompanyResponse);
         return createCompanyResponseResponse({
           ok: true,
           companyResponse: returnCompanyResponse.transform(),
@@ -79,7 +131,7 @@ module.exports = {
     deleteCompanyResponse: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
-        console.log('deleteCompanyResponse', input);
+
         const { responseId } = input;
 
         if (!responseId)
