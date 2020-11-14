@@ -39,5 +39,7 @@ module.exports.ERRORS = {
   },
   COMPANY_RESPONSE: {
     NO_RESPONSES_FOUND: 'No company responses found.',
+    NO_RESPONSE_FOUND: 'No company response found.',
+    INVALID_DATA: 'Invalid data received',
   },
 };
