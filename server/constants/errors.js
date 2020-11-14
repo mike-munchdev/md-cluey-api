@@ -24,6 +24,7 @@ module.exports.ERRORS = {
       'Friendship or friendship request already exists.',
     NO_FRIENDSHIP_REQUEST_EXISTS:
       'Friendship or friendship request does not exist.',
+    CANNOT_FRIEND_YOURSELF: 'You cannot befriend yourself.',
   },
   AUTH: {
     DENIED: 'Access denied',
@@ -35,5 +36,8 @@ module.exports.ERRORS = {
   COMPANY: {
     NOT_FOUND_WITH_PROVIDED_INFO:
       'No company found with the provided information.',
+  },
+  COMPANY_RESPONSE: {
+    NO_RESPONSES_FOUND: 'No company responses found.',
   },
 };

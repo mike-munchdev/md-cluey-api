@@ -1,23 +1,9 @@
 const mongoose = require('mongoose');
 const { default: validatorF } = require('validator');
-const { genderEnum, companyResponseEnum } = require('../utils/enum');
+const { genderEnum } = require('../utils/enum');
 const { transformCompany } = require('../utils/transform');
 
 const Schema = mongoose.Schema;
-
-const companyResponseSchema = new Schema(
-  {
-    company: {
-      ref: 'Company',
-      type: Schema.Types.ObjectId,
-    },
-    response: {
-      type: String,
-      enum: companyResponseEnum,
-    },
-  },
-  { timestamps: true }
-);
 
 const UserSchema = new Schema(
   {
@@ -48,14 +34,10 @@ const UserSchema = new Schema(
     appleId: { type: String },
     appleAuthToken: { type: String },
     appleIdentityToken: { type: String },
-
     facebookId: { type: String },
     facebookAuthToken: { type: String },
-
     isActive: { type: Boolean, default: false },
     confirmToken: { type: String },
-    friends: [{ type: Schema.Types.ObjectId, ref: 'Friends' }],
-    companyResponses: [companyResponseSchema],
     isProfilePublic: { type: Boolean, default: false },
     mustResetPassword: { type: Boolean, default: false },
     isAccountLocked: { type: Boolean, default: false },
@@ -76,30 +58,10 @@ UserSchema.pre('save', async function () {
 UserSchema.method('transform', function () {
   let obj = this.toObject();
 
-  if (this.companyResponses) {
-    obj.companyResponses = this.companyResponses.map((r) => {
-      return r.transform();
-    });
-  }
   //Rename fields
   obj.id = obj._id;
   delete obj._id;
   delete obj.password;
-
-  return obj;
-});
-
-companyResponseSchema.method('transform', function () {
-  let obj = this.toObject();
-
-  const company = transformCompany(obj.company);
-  obj.company = company;
-  // obj.company.id = obj.company._id;
-  obj.companyId = obj.company._id;
-
-  //Rename fields
-  obj.id = obj._id;
-  delete obj._id;
 
   return obj;
 });

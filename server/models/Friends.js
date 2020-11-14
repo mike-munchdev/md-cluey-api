@@ -19,11 +19,11 @@ const FriendsSchema = new Schema(
 FriendsSchema.method('transform', function () {
   let obj = this.toObject();
 
-  if (obj.recipient) {
-    obj.recipient.id = obj.recipient._id;
+  if (this.recipient) {
+    obj.recipient.id = this.recipient._id;
   }
-  if (obj.requester) {
-    obj.requester.id = obj.requester._id;
+  if (this.requester) {
+    obj.requester.id = this.requester._id;
   }
 
   obj.id = obj._id;

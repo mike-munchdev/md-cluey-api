@@ -1,4 +1,3 @@
-// https://stackoverflow.com/questions/50363220/modelling-for-friends-schema-in-mongoose
 const mongoose = require('mongoose');
 const { notificationTypeEnum } = require('../utils/enum');
 
@@ -14,4 +13,12 @@ const SystemNotificationSchema = new Schema(
   },
   { timestamps: true }
 );
+
+SystemNotificationSchema.method('transform', function () {
+  const obj = this.toObject();
+
+  obj.id = obj._id;
+
+  return obj;
+});
 module.exports = mongoose.model('SystemNotification', SystemNotificationSchema);

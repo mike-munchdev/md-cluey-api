@@ -2,7 +2,7 @@ const { gql } = require('apollo-server-express');
 
 // Construct a schema, using GraphQL schema language
 const typeDefs = gql`
-  type AuthenticationResponse {
+  type AuthenticationResolverResponse {
     ok: Boolean!
     token: String
     refreshToken: String
@@ -21,7 +21,7 @@ const typeDefs = gql`
       appleId: String
       appleAuthToken: String
       appleIdentityToken: String
-    ): AuthenticationResponse!
+    ): AuthenticationResolverResponse!
   }
 `;
 

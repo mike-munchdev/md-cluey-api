@@ -9,10 +9,6 @@ const { generateToken } = require('../utils/authentication');
 const connectDatabase = require('../models/connectDatabase');
 const { createAuthenticationResponse } = require('../utils/responses');
 const User = require('../models/User');
-const {
-  companyResponse,
-  companyResponsesPopulate,
-} = require('../utils/populate');
 
 module.exports = {
   Query: {
@@ -55,7 +51,7 @@ module.exports = {
 
           user = await User.findOne({
             appleId: appleId,
-          }).populate(companyResponsesPopulate);
+          });
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
@@ -70,7 +66,7 @@ module.exports = {
 
           user = await User.findOne({
             email: response.data.email,
-          }).populate(companyResponsesPopulate);
+          });
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
@@ -86,16 +82,15 @@ module.exports = {
           user = await User.findOne({
             // facebookId: id,
             email: response.data.email,
-          }).populate(companyResponsesPopulate);
+          });
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
           if (!user.isActive)
             throw new Error(ERRORS.USER.ACCOUNT_NOT_ACTIVATED);
           if (user.isAccountLocked) throw new Error(ERRORS.USER.ACCOUNT_LOCKED);
         } else {
-          user = await User.findOne({ email }).populate(
-            companyResponsesPopulate
-          );
+          user = await User.findOne({ email });
+
           if (!user) throw new Error(ERRORS.USER.EMAIL_AND_PASSWORD_INCORRECT);
 
           if (!user.isActive)

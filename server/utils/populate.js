@@ -15,14 +15,14 @@ module.exports.companyPopulate = [
     path: 'politicalContributions',
   },
 ];
-module.exports.companyResponse = {
+module.exports.companyResponsePopulate = {
   path: 'company',
   populate: this.companyPopulate,
 };
 
 module.exports.companyResponsesPopulate = {
   path: 'companyResponses',
-  populate: this.companyResponse,
+  populate: this.companyResponsePopulate,
 };
 
 module.exports.friendshipPopulate = [

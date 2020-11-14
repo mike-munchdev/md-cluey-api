@@ -17,7 +17,6 @@ const typeDefs = gql`
     facebookId: String
     appleId: String
     friends: [String!]
-    companyResponses: [ResponseToCompany!]
     confirmToken: String
     isProfilePublic: Boolean
     isActive: Boolean
@@ -25,46 +24,15 @@ const typeDefs = gql`
     mustResetPassword: Boolean
   }
 
-  type UserLite {
-    id: ID!
-    username: String
-    firstName: String
-    lastName: String
-  }
-  type ResponseToCompany {
-    id: ID!
-    companyId: String!
-    company: Company
-    response: String!
-  }
-
-  type UserResponse {
+  type UserResolverResponse {
     ok: Boolean!
     user: User
     error: Error
   }
 
-  type UsersResponse {
+  type UsersResolverResponse {
     ok: Boolean!
     users: [Friend!]
-    error: Error
-  }
-
-  type UserLiteResponse {
-    ok: Boolean
-    users: [UserLite!]
-    error: Error
-  }
-
-  type CompanyResponseResponse {
-    ok: Boolean!
-    companyResponse: ResponseToCompany!
-    error: Error
-  }
-
-  type CompanyResponsesResponse {
-    ok: Boolean!
-    companyResponses: [ResponseToCompany!]
     error: Error
   }
 
@@ -76,6 +44,7 @@ const typeDefs = gql`
     password: String!
     googleId: String
     facebookId: String
+    appleId: String
   }
 
   input UpdateUserInput {
@@ -87,6 +56,7 @@ const typeDefs = gql`
     lastName: String
     googleId: String
     facebookId: String
+    appleId: String
     isProfilePublic: Boolean
     isActive: Boolean
     dob: Date
@@ -120,12 +90,6 @@ const typeDefs = gql`
     pushToken: String!
   }
 
-  input UserCompanyResponseInput {
-    userId: String!
-    companyId: String!
-    response: String!
-  }
-
   input RequestFriendshipInput {
     requestorId: String!
     recipientId: String!
@@ -137,32 +101,24 @@ const typeDefs = gql`
   }
 
   type Query {
-    getUserById(userId: String!): UserResponse!
-    getUserCompanyResponses(userId: String!): CompanyResponsesResponse!
-    getUserFriends(userId: String!): FriendshipsResponse!
+    getUserById(userId: String!): UserResolverResponse!
+
     getPublicAndActiveNonFriendsByName(
       name: String!
       exact: Boolean
-    ): UserLiteResponse!
+    ): UsersResolverResponse!
   }
 
   type Mutation {
-    createUser(input: CreateUserInput!): UserResponse!
-    updateUser(input: UpdateUserInput!): UserResponse!
-    updateUserPassword(input: UpdateUserPasswordInput!): UserResponse!
-    resetPassword(email: String!): GeneralResponse!
-    userSignup(input: UserSignupInput!): GeneralResponse!
-    addPushToken(input: AddPushToken!): UserResponse!
+    createUser(input: CreateUserInput!): UserResolverResponse!
+    updateUser(input: UpdateUserInput!): UserResolverResponse!
+    updateUserPassword(input: UpdateUserPasswordInput!): UserResolverResponse!
+    resetPassword(email: String!): GeneralResolverResponse!
+    userSignup(input: UserSignupInput!): GeneralResolverResponse!
+    addPushToken(input: AddPushToken!): UserResolverResponse!
     activateUserAccount(
       input: ActivateUserAccountInput!
-    ): AuthenticationResponse!
-    updateCompanyResponseForUser(
-      input: UserCompanyResponseInput!
-    ): CompanyResponseResponse!
-    requestFriendship(input: RequestFriendshipInput!): UserResponse!
-    deleteFriendshipById(friendshipId: String!): GeneralResponse!
-    acceptFriendship(friendshipId: String!): FriendshipResponse!
-    rejectFriendship(friendshipId: String!): FriendshipResponse!
+    ): AuthenticationResolverResponse!
   }
 `;
 
