@@ -40,31 +40,58 @@ module.exports = {
     updateCompanyResponseForUser: async (parent, { input }, {}) => {
       try {
         await connectDatabase();
-
+        console.log('updateCompanyResponseForUser', input);
         const { userId, companyId, responseId, response } = input;
 
         let companyResponse;
         if (responseId) {
           companyResponse = await CompanyResponse.findByIdAndUpdate(
             responseId,
-            { response, company: companyId, user: userId },
-            { upsert: true, new: true }
+            { response },
+            { upsert: false, new: true }
           );
-        } else {
+        } else if (userId && companyId) {
           companyResponse = await CompanyResponse.findOneAndUpdate(
-            { company: companyId, user: userId },
-            { response, company: companyId, user: userId },
+            { user: userId, company: companyId },
+            { response },
             { upsert: true, new: true }
           );
+
+          console.log('companyResponse', companyResponse);
         }
 
         const returnCompanyResponse = await CompanyResponse.findById(
           companyResponse.id
         ).populate(companyResponsePopulate);
 
+        console.log('returnCompanyResponse', returnCompanyResponse);
         return createCompanyResponseResponse({
           ok: true,
           companyResponse: returnCompanyResponse.transform(),
+        });
+      } catch (error) {
+        return createCompanyResponseResponse({
+          ok: false,
+          error: convertError(error),
+        });
+      }
+    },
+    deleteCompanyResponse: async (parent, { input }, {}) => {
+      try {
+        await connectDatabase();
+        console.log('deleteCompanyResponse', input);
+        const { responseId } = input;
+
+        if (!responseId)
+          throw new Error(ERRORS.COMPANY_RESPONSE.NO_RESPONSE_FOUND);
+
+        await CompanyResponse.findOneAndDelete({
+          _id: responseId,
+        });
+
+        return createCompanyResponseResponse({
+          ok: true,
+          companyResponse: { id: responseId, response: '' },
         });
       } catch (error) {
         return createCompanyResponseResponse({
