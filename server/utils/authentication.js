@@ -15,10 +15,13 @@ module.exports.decodeAppleToken = (token) => {
         timeout: 30000, // Defaults to 30s
       });
 
+      console.log('process.env.APPLE_RSA_KEY', process.env.APPLE_RSA_KEY);
       const key = await client.getSigningKeyAsync(process.env.APPLE_RSA_KEY);
 
+      console.log('key', key);
       const signingKey = key.getPublicKey();
 
+      console.log('signingKey', signingKey);
       const decoded = await this.validateToken(token, signingKey);
 
       const { sub, email: decodedEmail } = decoded;
