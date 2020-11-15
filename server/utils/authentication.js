@@ -17,12 +17,9 @@ module.exports.getAppleSigningKey = async (kid) => {
 module.exports.decodeAppleToken = async (token) => {
   try {
     const decoded = jwt.decode(token, { complete: true });
-    console.log('decoded', decoded);
+
     const kid = decoded.header.kid;
     const appleKey = await this.getAppleSigningKey(kid);
-
-    console.log('token', token);
-    console.log('appleKey', appleKey);
 
     if (!appleKey) throw new Error('No Apple Key');
     const verfied = await this.validateToken(token, appleKey);
