@@ -52,7 +52,7 @@ module.exports = {
           user = await User.findOne({
             appleId: appleId,
           });
-          if ()
+
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
           if (!user.isActive)
