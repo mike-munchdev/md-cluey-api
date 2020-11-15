@@ -43,16 +43,16 @@ module.exports = {
         );
         let user;
         if (appleId || appleAuthToken || appleIdentityToken) {
-          // const { decodedEmail, sub } = await decodeAppleToken(
-          //   appleIdentityToken
-          // );
-          // console.log('decodedEmail', decodedEmail);
-          // console.log('sub', sub);
+          const { decodedEmail, sub } = await decodeAppleToken(
+            appleIdentityToken
+          );
+          console.log('decodedEmail', decodedEmail);
+          console.log('sub', sub);
 
           user = await User.findOne({
             appleId: appleId,
           });
-
+          if ()
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
           if (!user.isActive)
