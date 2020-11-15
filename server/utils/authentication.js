@@ -6,43 +6,39 @@ const connectDatabase = require('../models/connectDatabase');
 const { companyResponsesPopulate } = require('./populate');
 const { default: Bugsnag } = require('@bugsnag/js');
 
-module.exports.decodeAppleToken = (token) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const client = jwksClient({
-        strictSsl: true, // Default value
-        jwksUri: process.env.APPLE_RSA_KEYS_URL,
-        timeout: 30000, // Defaults to 30s
-      });
-
-      console.log('process.env.APPLE_RSA_KEY', process.env.APPLE_RSA_KEY);
-      const key = await client.getSigningKeyAsync(process.env.APPLE_RSA_KEY);
-
-      console.log('key', key);
-      const signingKey = key.getPublicKey();
-
-      console.log('signingKey', signingKey);
-      const decoded = await this.validateToken(token, signingKey);
-
-      const { sub, email: decodedEmail } = decoded;
-      resolve({ sub, decodedEmail });
-    } catch (error) {
-      Bugsnag.notify(error);
-      resolve(error);
-    }
-  });
+const client = jwksClient({
+  jwksUri: process.env.APPLE_RSA_KEYS_URL,
+});
+module.exports.getAppleSigningKey = async (kid) => {
+  const key = await client.getSigningKeyAsync(process.env.APPLE_RSA_KEY);
+  const signingKey = key.getPublicKey();
+  return signingKey;
 };
-module.exports.validateToken = (token, secret) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const decoded = jwt.verify(token, secret);
+module.exports.decodeAppleToken = async (token) => {
+  try {
+    const decoded = jwt.decode(token, { complete: true });
+    const kid = decoded.header.kid;
+    const appleKey = await this.getAppleSigningKey(kid);
 
-      resolve(decoded);
-    } catch (e) {
-      Bugsnag.notify(e);
-      reject(e);
-    }
-  });
+    if (!appleKey) throw new Error('No Apple Key');
+    const verfied = await this.validateToken(token, appleKey);
+
+    const { sub, email: decodedEmail } = verfied;
+    return { sub, decodedEmail };
+  } catch (error) {
+    Bugsnag.notify(error);
+    throw error;
+  }
+};
+module.exports.validateToken = async (token, secret) => {
+  try {
+    const decoded = jwt.verify(token, secret);
+
+    return decoded;
+  } catch (e) {
+    Bugsnag.notify(e);
+    throw e;
+  }
 };
 
 module.exports.findUserByToken = (decoded) => {
