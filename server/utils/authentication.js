@@ -21,6 +21,7 @@ module.exports.decodeAppleToken = async (token) => {
     const kid = decoded.header.kid;
     const appleKey = await this.getAppleSigningKey(kid);
 
+    console.log('token', token);
     console.log('appleKey', appleKey);
 
     if (!appleKey) throw new Error('No Apple Key');
