@@ -40,15 +40,26 @@ module.exports = {
 
         let user;
         if (appleId || appleAuthToken || appleIdentityToken) {
-          const { decodedEmail, sub } = await decodeAppleToken(
-            appleIdentityToken
-          );
-          console.log('decodedEmail', decodedEmail);
-          console.log('sub', sub);
-
           user = await User.findOne({
             appleId: appleId,
           });
+
+          // fix issue
+          if (!user) {
+            // check to see user exists but we didn't save the appleId
+            const { decodedEmail, sub } = await decodeAppleToken(
+              appleIdentityToken
+            );
+
+            user = await User.findOne({
+              email: decodedEmail,
+            });
+
+            if (user) {
+              user.appleId = sub;
+              await user.save();
+            }
+          }
 
           if (!user) throw new Error(ERRORS.USER.NOT_FOUND_WITH_PROVIDED_INFO);
 
