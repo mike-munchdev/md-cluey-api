@@ -29,18 +29,15 @@ module.exports = {
     ) => {
       try {
         await connectDatabase();
-        console.log(
-          'input',
-          email,
-          password,
-          facebookId,
-          facebookAuthToken,
-          googleAuthToken,
-          googleId,
-          appleId,
-          appleAuthToken,
-          appleIdentityToken
-        );
+        console.log('input', email, password);
+        console.log(`facebookId: ${facebookId}`);
+        console.log(`facebookAuthToken: ${facebookAuthToken}`);
+        console.log(`googleId: ${googleId}`);
+        console.log(`googleAuthToken: ${googleAuthToken}`);
+        console.log(`appleId: ${appleId}`);
+        console.log(`appleAuthToken: ${appleAuthToken}`);
+        console.log(`appleIdentityToken: ${appleIdentityToken}`);
+
         let user;
         if (appleId || appleAuthToken || appleIdentityToken) {
           const { decodedEmail, sub } = await decodeAppleToken(
