@@ -134,11 +134,7 @@ module.exports = {
         // add notification
         await addNotification(
           existingFriendship.requester,
-          `${
-            existingFriendship.recipient.username ||
-            `${existingFriendship.recipient.firstName} ${existingFriendship.recipient.lastName}`
-          } ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
-
+          `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
           notificationTypeEnum[1],
           existingFriendship._id
         );
@@ -232,9 +228,7 @@ module.exports = {
 
         const notification = await addNotification(
           recipientId,
-          `${user.username || `${user.firstName} ${user.lastName}`} ${
-            MESSAGES.FRIEND_REQUEST.REQUEST_PENDING
-          }`,
+          `${user.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_PENDING}`,
           notificationTypeEnum[0],
           friendship._id
         );
