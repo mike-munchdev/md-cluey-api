@@ -70,21 +70,6 @@ module.exports = {
         await connectDatabase();
         let users;
 
-        // const me = await User.findById(user.id, 'friends');
-        // console.log('getPublicAndActiveNonFriendsByName: me', me);
-        // const friendships = await Friends.find({
-        //   $or: [{ requester: user.id }, { recipient: user.id }],
-        //   status: friendshipEnum[2],
-        // });
-        // console.log(
-        //   'getPublicAndActiveNonFriendsByName friendships',
-        //   friendships
-        // );
-        // const friendIds = friendships.map((f) => {
-        //   const friend = f.requester.id === user.id ? f.recipient : f.requester;
-        //   return friend.id;
-        // });
-
         const orQuery = exact
           ? [
               { username: name },
@@ -109,7 +94,7 @@ module.exports = {
           },
           {
             $match: {
-              $or: orQuery,
+              $and: [{ username: { $ne: null } }, { $or: orQuery }],
             },
           },
         ])
