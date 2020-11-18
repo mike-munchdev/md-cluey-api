@@ -94,7 +94,8 @@ module.exports = {
           },
           {
             $match: {
-              $and: [{ username: { $ne: null } }, { $or: orQuery }],
+              // $and: [{ username: { $ne: null } }, { $or: orQuery }],
+              $and: [{ isActive: true }, { $or: orQuery }],
             },
           },
         ])
