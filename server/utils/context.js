@@ -19,7 +19,6 @@ module.exports = async (args) => {
         const token = req.header('x-auth');
         const version = req.header('version');
 
-        console.log('token', token);
         if (version !== process.env.API_VERSION)
           throw new AuthenticationError(
             `Version mismatch. Please update your application. Your Version:(${version}). Current Version:(${process.env.API_VERSION})`

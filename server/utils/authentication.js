@@ -33,7 +33,7 @@ module.exports.decodeAppleToken = async (token) => {
 };
 module.exports.validateToken = async (token, secret) => {
   try {
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, secret, { ignoreExpiration: true });
 
     return decoded;
   } catch (e) {
