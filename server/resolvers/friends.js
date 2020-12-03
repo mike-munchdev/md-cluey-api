@@ -132,12 +132,12 @@ module.exports = {
         }
 
         // add notification
-        await addNotification(
-          existingFriendship.requester,
-          `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
-          notificationTypeEnum[1],
-          existingFriendship._id
-        );
+        // await addNotification(
+        //   existingFriendship.requester,
+        //   `${existingFriendship.recipient.username} ${MESSAGES.FRIEND_REQUEST.REQUEST_ACCEPTED}`,
+        //   notificationTypeEnum[1],
+        //   existingFriendship._id
+        // );
 
         return createFriendshipResponse({
           ok: true,
