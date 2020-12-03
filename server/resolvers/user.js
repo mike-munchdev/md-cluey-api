@@ -323,7 +323,7 @@ module.exports = {
         const user = await User.create({
           ...input,
           email: saveEmail,
-          username: saveEmail,
+          // username: saveEmail,
           mustResetPassword: facebookId || googleId || appleId ? false : true,
           isActive,
           confirmToken,
