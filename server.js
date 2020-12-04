@@ -61,6 +61,7 @@ const resolvers = require('./server/resolvers/index');
     playground,
     context,
     formatError: (err) => {
+      console.log('err', err);
       return err;
     },
     subscriptions: {
